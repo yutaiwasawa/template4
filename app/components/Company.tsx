@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export function Company() {
   return (
@@ -31,9 +32,12 @@ export function Company() {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity">
+              <Link
+                href="/about"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity"
+              >
                 私たちについて
-              </button>
+              </Link>
             </motion.div>
           </motion.div>
           

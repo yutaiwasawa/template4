@@ -20,7 +20,7 @@ export function Footer() {
           <div>
             <ul className="flex space-x-8">
               <li>
-                <Link href="/about" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
+                <Link href="/about#profile" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
                   会社概要
                 </Link>
               </li>
