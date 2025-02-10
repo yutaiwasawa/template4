@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const services = [
   {
@@ -77,9 +78,12 @@ export function Service() {
           viewport={{ once: true }}
           className="text-center mt-20"
         >
-          <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity">
+          <Link
+            href="/services"
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity"
+          >
             サービス詳細
-          </button>
+          </Link>
         </motion.div>
       </div>
     </section>

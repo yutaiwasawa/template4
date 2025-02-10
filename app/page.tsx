@@ -1,3 +1,5 @@
+"use client";
+
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { Company } from "./components/Company";
@@ -7,10 +9,17 @@ import { News } from "./components/News";
 import { Career } from "./components/Career";
 import { Footer } from "./components/Footer";
 import { Loading } from "./components/Loading";
+import { motion } from "framer-motion";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-white"
+    >
       <Loading />
       <Header />
       <Hero />
@@ -20,6 +29,6 @@ export default function Home() {
       <News />
       <Career />
       <Footer />
-    </main>
+    </motion.main>
   );
 }

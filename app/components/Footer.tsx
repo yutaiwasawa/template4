@@ -1,4 +1,5 @@
 import { Twitter, Linkedin, Instagram } from "lucide-react";
+import Link from "next/link";
 
 export function Footer() {
   return (
@@ -18,11 +19,31 @@ export function Footer() {
           
           <div>
             <ul className="flex space-x-8">
-              <li className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">会社概要</li>
-              <li className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">サービス</li>
-              <li className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">実績</li>
-              <li className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">ニュース</li>
-              <li className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">採用情報</li>
+              <li>
+                <Link href="/about" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
+                  会社概要
+                </Link>
+              </li>
+              <li>
+                <Link href="/services" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
+                  サービス
+                </Link>
+              </li>
+              <li>
+                <Link href="/works" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
+                  実績
+                </Link>
+              </li>
+              <li>
+                <Link href="/news" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
+                  ニュース
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="text-gray-400 hover:text-purple-400 transition-colors cursor-pointer">
+                  採用情報
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
