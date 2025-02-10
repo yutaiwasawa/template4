@@ -16,6 +16,22 @@ const menuItems = [
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const element = document.querySelector(href);
+    if (element) {
+      const offset = 80; // ヘッダーの高さ分を考慮
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+      setIsOpen(false);
+    }
+  };
+
   return (
     <header className="fixed w-full z-50">
       <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent backdrop-blur-sm" />
@@ -30,6 +46,7 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={(e) => handleClick(e, item.href)}
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
               {item.label}
@@ -37,6 +54,7 @@ export function Header() {
           ))}
           <Link
             href="#contact"
+            onClick={(e) => handleClick(e, "#contact")}
             className="px-6 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
           >
             お問い合わせ
@@ -63,16 +81,16 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={(e) => handleClick(e, item.href)}
               className="block text-gray-600 hover:text-gray-900 transition-colors py-2"
-              onClick={() => setIsOpen(false)}
             >
               {item.label}
             </Link>
           ))}
           <Link
             href="#contact"
+            onClick={(e) => handleClick(e, "#contact")}
             className="block px-6 py-3 bg-purple-600 text-white text-center rounded-full hover:bg-purple-700 transition-colors"
-            onClick={() => setIsOpen(false)}
           >
             お問い合わせ
           </Link>
