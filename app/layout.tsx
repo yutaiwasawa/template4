@@ -23,8 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
-      <body className={`${notoSansJP.variable} ${outfit.variable} font-sans`}>{children}</body>
+    <html lang="ja" suppressHydrationWarning>
+      <body className={`${notoSansJP.variable} ${outfit.variable} font-sans`} suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }
