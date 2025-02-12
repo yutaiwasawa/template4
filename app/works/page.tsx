@@ -7,13 +7,11 @@ import { Footer } from "../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 
-// カテゴリーデータ
-const categories = [
-  { id: "all", label: "すべての記事" },
-  { id: "new-business", label: "マーケティング" },
-  { id: "organization", label: "ブランディング" },
-  { id: "recruitment", label: "採用戦略" },
-];
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+};
 
 type Work = {
   id: string;
@@ -24,9 +22,22 @@ export default function Works() {
   const [currentCategory, setCurrentCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [works, setWorks] = useState<Work[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const itemsPerPage = 6;
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/notion/categories');
+        const data = await response.json();
+        if (data.categories) {
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
     const fetchWorks = async () => {
       try {
         const response = await fetch('/api/notion/works');
@@ -39,6 +50,7 @@ export default function Works() {
       }
     };
 
+    fetchCategories();
     fetchWorks();
   }, []);
 
@@ -112,20 +124,33 @@ export default function Works() {
           <div className="mb-12">
             <div className="flex justify-center">
               <div className="inline-flex p-1 bg-white rounded-xl">
+                <button
+                  onClick={() => {
+                    setCurrentCategory("all");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    currentCategory === "all"
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                      : "text-gray-600 hover:text-purple-600"
+                  }`}
+                >
+                  すべての記事
+                </button>
                 {categories.map(category => (
                   <button
                     key={category.id}
                     onClick={() => {
-                      setCurrentCategory(category.id);
+                      setCurrentCategory(category.slug);
                       setCurrentPage(1);
                     }}
                     className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      currentCategory === category.id
+                      currentCategory === category.slug
                         ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
                         : "text-gray-600 hover:text-purple-600"
                     }`}
                   >
-                    {category.label}
+                    {category.name}
                   </button>
                 ))}
               </div>
