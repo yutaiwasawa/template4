@@ -9,31 +9,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Image from "next/image";
 import { useProcessImage } from '../../hooks/useProcessImage';
-
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type Work = {
-  id: string;
-  title: string;
-  publishedAt: string;
-  category?: string;
-  coverImage?: string | null;
-};
-
-type SimplifiedCase = {
-  id: string;
-  title: string;
-  category: {
-    name: string;
-    slug: string;
-  };
-  publishedAt: string;
-  coverImage: string;
-};
+import { Work, Category } from '../../types/work';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -43,7 +19,7 @@ const WorkCard = ({
   index,
   getCategoryName 
 }: { 
-  work: SimplifiedCase; 
+  work: Work; 
   index: number;
   getCategoryName: (slug: string | undefined) => string;
 }) => {
@@ -95,13 +71,13 @@ export default function Works() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const { data: categoriesData, error: categoriesError } = useSWR('/api/notion/categories', fetcher, {
+  const { data: categoriesData, error: categoriesError } = useSWR<{ categories: Category[] }>('/api/notion/categories', fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     dedupingInterval: 60000,
   });
 
-  const { data: worksData, error: worksError } = useSWR('/api/notion/works', fetcher, {
+  const { data: worksData, error: worksError } = useSWR<{ works: Work[] }>('/api/notion/works', fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     dedupingInterval: 60000,
@@ -115,7 +91,7 @@ export default function Works() {
   // カテゴリーでフィルタリングされた記事を取得
   const filteredWorks = currentCategory === "all"
     ? works
-    : works.filter((work: Work) => work.category === currentCategory);
+    : works.filter((work: Work) => work.category?.slug === currentCategory);
 
   // ページネーション
   const totalPages = Math.ceil(filteredWorks.length / itemsPerPage);
@@ -263,7 +239,7 @@ export default function Works() {
 
           {/* 実績一覧 */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentWorks.map((work: SimplifiedCase, index: number) => (
+            {currentWorks.map((work: Work, index: number) => (
               <WorkCard 
                 key={work.id} 
                 work={work} 

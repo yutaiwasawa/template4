@@ -1,14 +1,18 @@
 import { notion } from "@/lib/notion";
 import { NextResponse } from "next/server";
+import { Work } from '../../../../types/work';
 
 const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
 
-const dummyWorks = [
+const dummyWorks: Work[] = [
   {
     id: "1",
     title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
     publishedAt: "2024.03.15",
-    category: "marketing",
+    category: {
+      name: "マーケティング",
+      slug: "marketing"
+    },
     coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"
   },
   {
@@ -44,10 +48,10 @@ export async function GET() {
       },
     });
 
-    const works = await Promise.all(response.results.map(async (page: any) => {
+    const works: Work[] = await Promise.all(response.results.map(async (page: any) => {
       // カテゴリーのリレーション情報を取得
       const categoryRelation = page.properties.category?.relation?.[0];
-      let categorySlug;
+      let category = null;
 
       if (categoryRelation) {
         try {
@@ -55,8 +59,11 @@ export async function GET() {
           const categoryPage = await notion.pages.retrieve({
             page_id: categoryRelation.id,
           });
-          // カテゴリーのslugを取得
-          categorySlug = (categoryPage as any).properties.slug?.rich_text[0]?.plain_text;
+          // カテゴリー情報を構築
+          category = {
+            name: (categoryPage as any).properties.name?.title[0]?.plain_text || "",
+            slug: (categoryPage as any).properties.slug?.rich_text[0]?.plain_text || ""
+          };
         } catch (error) {
           console.error('Error fetching category:', error);
         }
@@ -81,7 +88,7 @@ export async function GET() {
           month: '2-digit',
           day: '2-digit',
         }).replace(/\//g, '.'),
-        category: categorySlug,
+        category,
         coverImage
       };
     }));
