@@ -191,7 +191,7 @@ async function getWork(id: string) {
         challenge: (response as any).properties.challenge?.rich_text[0]?.plain_text || "",
         solution: (response as any).properties.solution?.rich_text.map((text: any) => text.plain_text) || [],
         result: (response as any).properties.result?.rich_text[0]?.plain_text || "",
-        blocks: blocks as Block[],
+        blocks: blocks as unknown as Block[],
       },
       prevCase: prevCaseData,
       nextCase: nextCaseData
