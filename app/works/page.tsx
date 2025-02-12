@@ -73,7 +73,7 @@ export default function Works() {
   // カテゴリー名を取得する関数
   const getCategoryName = (slug: string | undefined) => {
     if (!slug) return "その他";
-    const category = categories.find(cat => cat.slug === slug);
+    const category = categories.find((cat: Category) => cat.slug === slug);
     return category?.name || "その他";
   };
 
