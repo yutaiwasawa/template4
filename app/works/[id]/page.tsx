@@ -34,7 +34,11 @@ async function getWork(id: string) {
       id: response.id,
       title: (response as any).properties.title.title[0]?.plain_text || "",
       category: "new-business", // 仮の値
-      date: "2024.04.15", // 仮の値
+      publishedAt: new Date((response as any).last_edited_time).toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).replace(/\//g, '.'),
       client: "仮のクライアント名",
       period: "2024年1月〜2024年4月",
       image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",

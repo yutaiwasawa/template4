@@ -10,7 +10,7 @@ type Case = {
   id: string;
   title: string;
   category: string;
-  date: string;
+  publishedAt: string;
   client: string;
   period: string;
   image: string;
@@ -69,7 +69,7 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
               </div>
               
               <div className="flex items-center gap-4 mb-6">
-                <span className="text-purple-200 text-lg">{currentCase.date}</span>
+                <span className="text-purple-200 text-lg">{currentCase.publishedAt}</span>
                 <span className="px-4 py-1 bg-white/20 text-white rounded-full">
                   {currentCase.category === "new-business" && "マーケティング"}
                   {currentCase.category === "organization" && "ブランディング"}

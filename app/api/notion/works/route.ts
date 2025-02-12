@@ -10,14 +10,17 @@ export async function GET() {
           {
             id: "1",
             title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
+            publishedAt: "2024.03.15",
           },
           {
             id: "2",
             title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
+            publishedAt: "2024.03.10",
           },
           {
             id: "3",
             title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
+            publishedAt: "2024.03.05",
           },
         ]
       });
@@ -36,6 +39,11 @@ export async function GET() {
     const works = response.results.map((page: any) => ({
       id: page.id,
       title: page.properties.title.title[0]?.plain_text || "",
+      publishedAt: new Date(page.last_edited_time).toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).replace(/\//g, '.'),
     }));
 
     return NextResponse.json({ works });
@@ -47,14 +55,17 @@ export async function GET() {
         {
           id: "1",
           title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
+          publishedAt: "2024.03.15",
         },
         {
           id: "2",
           title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
+          publishedAt: "2024.03.10",
         },
         {
           id: "3",
           title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
+          publishedAt: "2024.03.05",
         },
       ]
     });

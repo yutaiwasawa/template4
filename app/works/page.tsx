@@ -16,28 +16,13 @@ type Category = {
 type Work = {
   id: string;
   title: string;
+  publishedAt: string;
 };
-
-// ダミーデータ（Notion連携が完了するまでの仮データ）
-const dummyWorks = [
-  {
-    id: "1",
-    title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
-  },
-  {
-    id: "2",
-    title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
-  },
-  {
-    id: "3",
-    title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
-  },
-];
 
 export default function Works() {
   const [currentCategory, setCurrentCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [works, setWorks] = useState<Work[]>(dummyWorks); // ダミーデータを初期値として設定
+  const [works, setWorks] = useState<Work[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +52,6 @@ export default function Works() {
         }
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        // エラー時もダミーデータを表示
       } finally {
         setIsLoading(false);
       }
@@ -216,7 +200,7 @@ export default function Works() {
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-4 mb-4">
-                        <span className="text-gray-500 text-sm">2024.04.15</span>
+                        <span className="text-gray-500 text-sm">{work.publishedAt}</span>
                         <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
                           マーケティング
                         </span>
