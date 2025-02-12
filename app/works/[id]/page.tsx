@@ -28,6 +28,22 @@ export async function generateStaticParams() {
   }
 }
 
+// カテゴリー名を取得する関数
+async function getCategoryName(categoryId: string) {
+  try {
+    const categoryPage = await notion.pages.retrieve({
+      page_id: categoryId,
+    });
+    return {
+      name: (categoryPage as any).properties.name.title[0]?.plain_text || "その他",
+      slug: (categoryPage as any).properties.slug.rich_text[0]?.plain_text || ""
+    };
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    return { name: "その他", slug: "" };
+  }
+}
+
 // 個別記事のデータを取得
 async function getWork(id: string) {
   // 開発環境でAPIキーが設定されていない場合はダミーデータを返す
@@ -35,7 +51,7 @@ async function getWork(id: string) {
     return {
       id: id,
       title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
-      category: "new-business",
+      category: { name: "マーケティング", slug: "marketing" },
       publishedAt: "2024.03.15",
       client: "株式会社サンプル",
       period: "2024年1月〜2024年3月",
@@ -62,13 +78,19 @@ async function getWork(id: string) {
       return null;
     }
 
+    // カテゴリー情報を取得
+    const categoryRelation = (response as any).properties.category?.relation?.[0];
+    const category = categoryRelation
+      ? await getCategoryName(categoryRelation.id)
+      : { name: "その他", slug: "" };
+
     // ブロックの取得
     const blocks = await getBlocks(id);
 
     return {
       id: response.id,
       title: (response as any).properties.title.title[0]?.plain_text || "",
-      category: (response as any).properties.category?.select?.name || "new-business",
+      category,
       publishedAt: new Date((response as any).last_edited_time).toLocaleDateString('ja-JP', {
         year: 'numeric',
         month: '2-digit',

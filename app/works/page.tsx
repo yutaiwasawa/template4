@@ -17,6 +17,7 @@ type Work = {
   id: string;
   title: string;
   publishedAt: string;
+  category?: string; // カテゴリーのslug
 };
 
 export default function Works() {
@@ -44,6 +45,9 @@ export default function Works() {
         const categoriesData = await categoriesRes.json();
         const worksData = await worksRes.json();
 
+        console.log('Categories:', categoriesData); // デバッグ用
+        console.log('Works:', worksData); // デバッグ用
+
         if (categoriesData.categories?.length > 0) {
           setCategories(categoriesData.categories);
         }
@@ -52,6 +56,7 @@ export default function Works() {
         }
       } catch (err) {
         console.error('Failed to fetch data:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);
       }
@@ -60,12 +65,39 @@ export default function Works() {
     fetchData();
   }, []);
 
+  // カテゴリーでフィルタリングされた記事を取得
+  const filteredWorks = currentCategory === "all"
+    ? works
+    : works.filter(work => work.category === currentCategory);
+
   // ページネーション
-  const totalPages = Math.ceil(works.length / itemsPerPage);
-  const currentWorks = works.slice(
+  const totalPages = Math.ceil(filteredWorks.length / itemsPerPage);
+  const currentWorks = filteredWorks.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // カテゴリー名を取得する関数
+  const getCategoryName = (slug: string | undefined) => {
+    if (!slug) return "その他";
+    const category = categories.find(cat => cat.slug === slug);
+    return category?.name || "その他";
+  };
+
+  // エラー表示
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="pt-24 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-600">エラーが発生しました: {error}</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   // ローディング中の表示
   if (isLoading) {
@@ -202,7 +234,7 @@ export default function Works() {
                       <div className="flex items-center gap-4 mb-4">
                         <span className="text-gray-500 text-sm">{work.publishedAt}</span>
                         <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                          マーケティング
+                          {getCategoryName(work.category)}
                         </span>
                       </div>
                       <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">

@@ -13,10 +13,15 @@ type Block = {
   [key: string]: any;
 };
 
+type Category = {
+  name: string;
+  slug: string;
+};
+
 type Case = {
   id: string;
   title: string;
-  category: string;
+  category: Category;
   publishedAt: string;
   client: string;
   period: string;
@@ -78,9 +83,7 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-purple-200 text-lg">{currentCase.publishedAt}</span>
                 <span className="px-4 py-1 bg-white/20 text-white rounded-full">
-                  {currentCase.category === "new-business" && "マーケティング"}
-                  {currentCase.category === "organization" && "ブランディング"}
-                  {currentCase.category === "recruitment" && "採用戦略"}
+                  {currentCase.category.name}
                 </span>
               </div>
 
