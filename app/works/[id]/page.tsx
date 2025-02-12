@@ -1,5 +1,6 @@
 import { WorkDetail } from "./WorkDetail";
 import { notion } from "@/lib/notion";
+import { redirect } from 'next/navigation';
 
 // 静的パラメータを生成
 export async function generateStaticParams() {
@@ -30,6 +31,11 @@ async function getWork(id: string) {
       page_id: id,
     });
 
+    // 非公開の記事の場合はnullを返す
+    if ((response as any).properties.status.select.name !== "published") {
+      return null;
+    }
+
     return {
       id: response.id,
       title: (response as any).properties.title.title[0]?.plain_text || "",
@@ -55,7 +61,11 @@ async function getWork(id: string) {
 
 export default async function Page({ params }: { params: { id: string } }) {
   const currentWork = await getWork(params.id);
-  if (!currentWork) return null;
+  
+  // 非公開の記事や存在しない記事の場合はトップページにリダイレクト
+  if (!currentWork) {
+    redirect('/');
+  }
 
   return (
     <WorkDetail
