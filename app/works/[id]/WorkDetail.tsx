@@ -33,10 +33,21 @@ type Case = {
   blocks?: Block[];
 };
 
+type SimplifiedCase = {
+  id: string;
+  title: string;
+  category: {
+    name: string;
+    slug: string;
+  };
+  publishedAt: string;
+  coverImage: string;
+};
+
 type WorkDetailProps = {
   currentCase: Case;
-  prevCase?: Case | null;
-  nextCase?: Case | null;
+  prevCase: SimplifiedCase | null;
+  nextCase: SimplifiedCase | null;
 };
 
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
