@@ -187,7 +187,7 @@ export default function Works() {
                 >
                   すべての記事
                 </button>
-                {categories.map(category => (
+                {categories.map((category: Category) => (
                   <button
                     key={category.id}
                     onClick={() => {
