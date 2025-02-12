@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from "swr";
+import Image from "next/image";
 
 type Category = {
   id: string;
@@ -21,47 +23,29 @@ type Work = {
   coverImage?: string | null;
 };
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function Works() {
   const [currentCategory, setCurrentCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [works, setWorks] = useState<Work[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 6;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [categoriesRes, worksRes] = await Promise.all([
-          fetch('/api/notion/categories'),
-          fetch('/api/notion/works')
-        ]);
+  const { data: categoriesData, error: categoriesError } = useSWR('/api/notion/categories', fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 60000,
+  });
 
-        if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
-        if (!worksRes.ok) throw new Error('Failed to fetch works');
+  const { data: worksData, error: worksError } = useSWR('/api/notion/works', fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 60000,
+  });
 
-        const categoriesData = await categoriesRes.json();
-        const worksData = await worksRes.json();
-
-        if (categoriesData.categories?.length > 0) {
-          setCategories(categoriesData.categories);
-        }
-        if (worksData.works?.length > 0) {
-          setWorks(worksData.works);
-        }
-      } catch (err) {
-        console.error('Failed to fetch data:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const isLoading = !categoriesData || !worksData;
+  const error = categoriesError || worksError;
+  const categories = categoriesData?.categories || [];
+  const works = worksData?.works || [];
 
   // カテゴリーでフィルタリングされた記事を取得
   const filteredWorks = currentCategory === "all"
@@ -89,7 +73,7 @@ export default function Works() {
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <p className="text-red-600">エラーが発生しました: {error}</p>
+            <p className="text-red-600">エラーが発生しました: {error.message}</p>
           </div>
         </div>
         <Footer />
@@ -127,10 +111,13 @@ export default function Works() {
       <section className="relative pt-24">
         <div className="relative h-[40vh] flex items-center">
           <div className="absolute inset-0">
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80"
               alt="実績紹介"
-              className="w-full h-full object-cover"
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600/95 to-pink-600/90" />
           </div>
@@ -222,10 +209,13 @@ export default function Works() {
                 <Link href={`/works/${work.id}`}>
                   <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100 hover:border-purple-300 transition-all duration-300">
                     <div className="relative h-48">
-                      <img
+                      <Image
                         src={work.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
                         alt={work.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
                       />
                     </div>
                     <div className="p-6">
