@@ -18,40 +18,62 @@ type Work = {
   title: string;
 };
 
+// ダミーデータ（Notion連携が完了するまでの仮データ）
+const dummyWorks = [
+  {
+    id: "1",
+    title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
+  },
+  {
+    id: "2",
+    title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
+  },
+  {
+    id: "3",
+    title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
+  },
+];
+
 export default function Works() {
   const [currentCategory, setCurrentCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [works, setWorks] = useState<Work[]>([]);
+  const [works, setWorks] = useState<Work[]>(dummyWorks); // ダミーデータを初期値として設定
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 6;
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        const response = await fetch('/api/notion/categories');
-        const data = await response.json();
-        if (data.categories) {
-          setCategories(data.categories);
+        const [categoriesRes, worksRes] = await Promise.all([
+          fetch('/api/notion/categories'),
+          fetch('/api/notion/works')
+        ]);
+
+        if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
+        if (!worksRes.ok) throw new Error('Failed to fetch works');
+
+        const categoriesData = await categoriesRes.json();
+        const worksData = await worksRes.json();
+
+        if (categoriesData.categories?.length > 0) {
+          setCategories(categoriesData.categories);
         }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
+        if (worksData.works?.length > 0) {
+          setWorks(worksData.works);
+        }
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+        // エラー時もダミーデータを表示
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    const fetchWorks = async () => {
-      try {
-        const response = await fetch('/api/notion/works');
-        const data = await response.json();
-        if (data.works) {
-          setWorks(data.works);
-        }
-      } catch (error) {
-        console.error('Failed to fetch works:', error);
-      }
-    };
-
-    fetchCategories();
-    fetchWorks();
+    fetchData();
   }, []);
 
   // ページネーション
@@ -60,6 +82,22 @@ export default function Works() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // ローディング中の表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="pt-24 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4 mx-auto"></div>
+            <p className="text-gray-600">読み込み中...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <motion.main
