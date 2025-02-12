@@ -1,24 +1,29 @@
 import { notion } from "@/lib/notion";
 import { NextResponse } from "next/server";
 
+const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
+
 const dummyWorks = [
   {
     id: "1",
     title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
     publishedAt: "2024.03.15",
-    category: "marketing"
+    category: "marketing",
+    coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"
   },
   {
     id: "2",
     title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
     publishedAt: "2024.03.10",
-    category: "branding"
+    category: "branding",
+    coverImage: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80"
   },
   {
     id: "3",
     title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
     publishedAt: "2024.03.05",
-    category: "recruitment"
+    category: "recruitment",
+    coverImage: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80"
   },
 ];
 
@@ -57,6 +62,17 @@ export async function GET() {
         }
       }
 
+      // featuredImageプロパティから画像URLを取得
+      let coverImage = DEFAULT_COVER_IMAGE;
+      const featuredImage = page.properties.featuredImage?.files?.[0];
+      if (featuredImage) {
+        if (featuredImage.type === 'external') {
+          coverImage = featuredImage.external.url;
+        } else if (featuredImage.type === 'file') {
+          coverImage = featuredImage.file.url;
+        }
+      }
+
       return {
         id: page.id,
         title: page.properties.title.title[0]?.plain_text || "",
@@ -65,7 +81,8 @@ export async function GET() {
           month: '2-digit',
           day: '2-digit',
         }).replace(/\//g, '.'),
-        category: categorySlug // リレーションから取得したカテゴリーのslug
+        category: categorySlug,
+        coverImage
       };
     }));
 

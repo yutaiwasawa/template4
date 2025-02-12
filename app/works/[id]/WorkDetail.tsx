@@ -25,7 +25,7 @@ type Case = {
   publishedAt: string;
   client: string;
   period: string;
-  image: string;
+  coverImage: string | null;
   description: string;
   challenge: string;
   solution: string[];
@@ -55,7 +55,7 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
         <div className="relative h-[50vh] flex items-center">
           <div className="absolute inset-0">
             <img
-              src={currentCase.image}
+              src={currentCase.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
               alt={currentCase.title}
               className="w-full h-full object-cover"
             />
@@ -102,7 +102,7 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
             {/* アイキャッチ画像 */}
             <div className="mb-16 rounded-2xl overflow-hidden">
               <img
-                src={currentCase.image}
+                src={currentCase.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
                 alt={currentCase.title}
                 className="w-full aspect-video object-cover"
               />

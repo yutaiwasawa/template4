@@ -17,7 +17,8 @@ type Work = {
   id: string;
   title: string;
   publishedAt: string;
-  category?: string; // カテゴリーのslug
+  category?: string;
+  coverImage?: string | null;
 };
 
 export default function Works() {
@@ -44,9 +45,6 @@ export default function Works() {
 
         const categoriesData = await categoriesRes.json();
         const worksData = await worksRes.json();
-
-        console.log('Categories:', categoriesData); // デバッグ用
-        console.log('Works:', worksData); // デバッグ用
 
         if (categoriesData.categories?.length > 0) {
           setCategories(categoriesData.categories);
@@ -225,7 +223,7 @@ export default function Works() {
                   <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100 hover:border-purple-300 transition-all duration-300">
                     <div className="relative h-48">
                       <img
-                        src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"
+                        src={work.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
                         alt={work.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />

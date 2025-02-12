@@ -2,6 +2,8 @@ import { WorkDetail } from "./WorkDetail";
 import { notion, getBlocks } from "@/lib/notion";
 import { redirect } from 'next/navigation';
 
+const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
+
 // 静的パラメータを生成
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
@@ -55,7 +57,7 @@ async function getWork(id: string) {
       publishedAt: "2024.03.15",
       client: "株式会社サンプル",
       period: "2024年1月〜2024年3月",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
+      coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
       description: "化粧品ブランドのSNSマーケティング施策の事例です。",
       challenge: "SNSでのエンゲージメント率が低く、ブランドの認知度向上が課題でした。",
       solution: [
@@ -84,6 +86,17 @@ async function getWork(id: string) {
       ? await getCategoryName(categoryRelation.id)
       : { name: "その他", slug: "" };
 
+    // featuredImageプロパティから画像URLを取得
+    let coverImage = DEFAULT_COVER_IMAGE;
+    const featuredImage = (response as any).properties.featuredImage?.files?.[0];
+    if (featuredImage) {
+      if (featuredImage.type === 'external') {
+        coverImage = featuredImage.external.url;
+      } else if (featuredImage.type === 'file') {
+        coverImage = featuredImage.file.url;
+      }
+    }
+
     // ブロックの取得
     const blocks = await getBlocks(id);
 
@@ -98,7 +111,7 @@ async function getWork(id: string) {
       }).replace(/\//g, '.'),
       client: (response as any).properties.client?.rich_text[0]?.plain_text || "仮のクライアント名",
       period: (response as any).properties.period?.rich_text[0]?.plain_text || "2024年1月〜2024年4月",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
+      coverImage,
       description: (response as any).properties.description?.rich_text[0]?.plain_text || "",
       challenge: (response as any).properties.challenge?.rich_text[0]?.plain_text || "",
       solution: (response as any).properties.solution?.rich_text.map((text: any) => text.plain_text) || [],
