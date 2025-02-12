@@ -51,26 +51,59 @@ async function getWork(id: string) {
   // 開発環境でAPIキーが設定されていない場合はダミーデータを返す
   if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
     return {
-      id: id,
-      title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
-      category: { name: "マーケティング", slug: "marketing" },
-      publishedAt: "2024.03.15",
-      client: "株式会社サンプル",
-      period: "2024年1月〜2024年3月",
-      coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
-      description: "化粧品ブランドのSNSマーケティング施策の事例です。",
-      challenge: "SNSでのエンゲージメント率が低く、ブランドの認知度向上が課題でした。",
-      solution: [
-        "ターゲット層の分析と投稿内容の最適化",
-        "インフルエンサーマーケティングの活用",
-        "広告運用の改善"
-      ],
-      result: "施策実施後、月間エンゲージメント率が200%増加し、商品の売上も150%向上しました。",
-      blocks: []
+      currentCase: {
+        id: id,
+        title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
+        category: { name: "マーケティング", slug: "marketing" },
+        publishedAt: "2024.03.15",
+        client: "株式会社サンプル",
+        period: "2024年1月〜2024年3月",
+        coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
+        description: "化粧品ブランドのSNSマーケティング施策の事例です。",
+        challenge: "SNSでのエンゲージメント率が低く、ブランドの認知度向上が課題でした。",
+        solution: [
+          "ターゲット層の分析と投稿内容の最適化",
+          "インフルエンサーマーケティングの活用",
+          "広告運用の改善"
+        ],
+        result: "施策実施後、月間エンゲージメント率が200%増加し、商品の売上も150%向上しました。",
+        blocks: []
+      },
+      prevCase: null,
+      nextCase: null
     };
   }
 
   try {
+    // すべての公開記事を取得
+    const allWorksResponse = await notion.databases.query({
+      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
+      filter: {
+        property: "status",
+        select: {
+          equals: "published"
+        }
+      },
+      sorts: [
+        {
+          timestamp: "created_time",
+          direction: "descending"
+        }
+      ]
+    });
+
+    // 現在の記事のインデックスを見つける
+    const currentIndex = allWorksResponse.results.findIndex(page => page.id === id);
+    
+    // 前後の記事を取得
+    const prevWork = currentIndex < allWorksResponse.results.length - 1 
+      ? allWorksResponse.results[currentIndex + 1] 
+      : null;
+    const nextWork = currentIndex > 0 
+      ? allWorksResponse.results[currentIndex - 1] 
+      : null;
+
+    // 現在の記事の詳細を取得
     const response = await notion.pages.retrieve({
       page_id: id,
     });
@@ -100,23 +133,62 @@ async function getWork(id: string) {
     // ブロックの取得
     const blocks = await getBlocks(id);
 
+    // 前後の記事の基本情報を取得
+    const getPrevNextWork = async (page: any) => {
+      if (!page) return null;
+      
+      const categoryId = page.properties.category?.relation?.[0]?.id;
+      const category = categoryId ? await getCategoryName(categoryId) : { name: "その他", slug: "" };
+      
+      let workCoverImage = DEFAULT_COVER_IMAGE;
+      const workFeaturedImage = page.properties.featuredImage?.files?.[0];
+      if (workFeaturedImage) {
+        if (workFeaturedImage.type === 'external') {
+          workCoverImage = workFeaturedImage.external.url;
+        } else if (workFeaturedImage.type === 'file') {
+          workCoverImage = workFeaturedImage.file.url;
+        }
+      }
+
+      return {
+        id: page.id,
+        title: page.properties.title.title[0]?.plain_text || "",
+        category,
+        publishedAt: new Date(page.created_time).toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).replace(/\//g, '.'),
+        coverImage: workCoverImage
+      };
+    };
+
+    const [prevCaseData, nextCaseData] = await Promise.all([
+      getPrevNextWork(prevWork),
+      getPrevNextWork(nextWork)
+    ]);
+
     return {
-      id: response.id,
-      title: (response as any).properties.title.title[0]?.plain_text || "",
-      category,
-      publishedAt: new Date((response as any).last_edited_time).toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).replace(/\//g, '.'),
-      client: (response as any).properties.client?.rich_text[0]?.plain_text || "仮のクライアント名",
-      period: (response as any).properties.period?.rich_text[0]?.plain_text || "2024年1月〜2024年4月",
-      coverImage,
-      description: (response as any).properties.description?.rich_text[0]?.plain_text || "",
-      challenge: (response as any).properties.challenge?.rich_text[0]?.plain_text || "",
-      solution: (response as any).properties.solution?.rich_text.map((text: any) => text.plain_text) || [],
-      result: (response as any).properties.result?.rich_text[0]?.plain_text || "",
-      blocks: blocks,
+      currentCase: {
+        id: response.id,
+        title: (response as any).properties.title.title[0]?.plain_text || "",
+        category,
+        publishedAt: new Date((response as any).created_time).toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).replace(/\//g, '.'),
+        client: (response as any).properties.client?.rich_text[0]?.plain_text || "仮のクライアント名",
+        period: (response as any).properties.period?.rich_text[0]?.plain_text || "2024年1月〜2024年4月",
+        coverImage,
+        description: (response as any).properties.description?.rich_text[0]?.plain_text || "",
+        challenge: (response as any).properties.challenge?.rich_text[0]?.plain_text || "",
+        solution: (response as any).properties.solution?.rich_text.map((text: any) => text.plain_text) || [],
+        result: (response as any).properties.result?.rich_text[0]?.plain_text || "",
+        blocks: blocks,
+      },
+      prevCase: prevCaseData,
+      nextCase: nextCaseData
     };
   } catch (error) {
     console.error('Failed to fetch work:', error);
@@ -125,18 +197,18 @@ async function getWork(id: string) {
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const currentWork = await getWork(params.id);
+  const workData = await getWork(params.id);
   
   // 非公開の記事や存在しない記事の場合はトップページにリダイレクト
-  if (!currentWork) {
+  if (!workData) {
     redirect('/works');
   }
 
   return (
     <WorkDetail
-      currentCase={currentWork}
-      prevCase={undefined}
-      nextCase={undefined}
+      currentCase={workData.currentCase}
+      prevCase={workData.prevCase}
+      nextCase={workData.nextCase}
     />
   );
 }
