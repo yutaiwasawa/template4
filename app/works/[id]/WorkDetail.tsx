@@ -6,7 +6,12 @@ import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { NotionBlocks } from "./components/NotionBlocks";
-import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+
+type Block = {
+  type: string;
+  id: string;
+  [key: string]: any;
+};
 
 type Category = {
   name: string;
@@ -25,7 +30,7 @@ type Case = {
   challenge: string;
   solution: string[];
   result: string;
-  blocks?: PartialBlockObjectResponse[];
+  blocks?: Block[];
 };
 
 type WorkDetailProps = {

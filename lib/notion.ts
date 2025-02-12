@@ -1,4 +1,5 @@
 import { Client } from "@notionhq/client";
+import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
 if (process.env.NODE_ENV === 'production' && !process.env.NOTION_API_KEY) {
   throw new Error("Missing NOTION_API_KEY environment variable in production");
@@ -9,7 +10,7 @@ export const notion = new Client({
 });
 
 // ブロックの取得
-export async function getBlocks(blockId: string) {
+export async function getBlocks(blockId: string): Promise<PartialBlockObjectResponse[]> {
   try {
     const blocks = [];
     let cursor;
