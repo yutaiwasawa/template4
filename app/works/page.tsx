@@ -209,7 +209,7 @@ export default function Works() {
 
           {/* 実績一覧 */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentWorks.map((work, index) => (
+            {currentWorks.map((work: SimplifiedCase, index: number) => (
               <motion.div
                 key={work.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -233,7 +233,7 @@ export default function Works() {
                       <div className="flex items-center gap-4 mb-4">
                         <span className="text-gray-500 text-sm">{work.publishedAt}</span>
                         <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                          {getCategoryName(work.category)}
+                          {getCategoryName(work.category?.slug)}
                         </span>
                       </div>
                       <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
