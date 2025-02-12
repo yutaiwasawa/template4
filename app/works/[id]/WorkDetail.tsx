@@ -5,6 +5,13 @@ import Link from "next/link";
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import { NotionBlocks } from "./components/NotionBlocks";
+
+type Block = {
+  type: string;
+  id: string;
+  [key: string]: any;
+};
 
 type Case = {
   id: string;
@@ -18,7 +25,7 @@ type Case = {
   challenge: string;
   solution: string[];
   result: string;
-  content?: string;
+  blocks?: Block[];
 };
 
 type WorkDetailProps = {
@@ -141,12 +148,8 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
               </div>
             </div>
 
-            {/* 詳細コンテンツ */}
-            {currentCase.content && (
-              <div className="prose prose-purple max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: currentCase.content }} />
-              </div>
-            )}
+            {/* Notionブロック */}
+            {currentCase.blocks && <NotionBlocks blocks={currentCase.blocks} />}
 
             {/* ページネーション */}
             <div className="flex items-center pt-8 border-t border-gray-200">
