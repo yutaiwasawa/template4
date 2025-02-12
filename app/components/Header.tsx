@@ -9,7 +9,7 @@ const menuItems = [
   { href: "#about", label: "企業情報" },
   { href: "#services", label: "サービス" },
   { href: "#work", label: "実績" },
-  { href: "#news", label: "ニュース" },
+  { href: "#news", label: "お知らせ" },
   { href: "#career", label: "採用情報" },
 ];
 

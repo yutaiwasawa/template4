@@ -55,18 +55,20 @@ export function Service() {
               viewport={{ once: true }}
               className="group cursor-pointer"
             >
-              <div className="relative overflow-hidden rounded-2xl">
-                <div className="absolute inset-0 bg-gradient-to-t from-purple-900/90 via-purple-900/50 to-transparent z-10" />
-                <img
-                  src={service.image}
-                  alt={service.title}
-                  className="w-full aspect-[16/9] object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-8 z-20">
-                  <h3 className="text-3xl text-white font-bold mb-4">{service.title}</h3>
-                  <p className="text-purple-100 text-lg">{service.description}</p>
+              {/* <Link href="/services"> */}
+                <div className="relative overflow-hidden rounded-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/90 via-purple-900/50 to-transparent z-10" />
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="w-full aspect-[16/9] object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 p-8 z-20">
+                    <h3 className="text-3xl text-white font-bold mb-4">{service.title}</h3>
+                    <p className="text-purple-100 text-lg">{service.description}</p>
+                  </div>
                 </div>
-              </div>
+              {/* </Link> */}
             </motion.div>
           ))}
         </div>

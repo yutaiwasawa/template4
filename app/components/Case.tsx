@@ -1,25 +1,29 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const cases = [
   {
+    id: "case1",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
-    date: "2024.03.15",
-    category: "ブランド戦略",
-    title: "大手テクノロジー企業のグローバルブランド戦略を刷新",
+    date: "2024.04.15",
+    category: "マーケティング",
+    title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
   },
   {
+    id: "case2",
     image: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80",
-    date: "2024.02.28",
-    category: "デジタルマーケティング",
-    title: "D2Cブランドの売上を6ヶ月で200%に成長",
+    date: "2024.04.08",
+    category: "ブランディング",
+    title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
   },
   {
+    id: "case3",
     image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80",
-    date: "2024.02.10",
-    category: "SNSマーケティング",
-    title: "新規サービスのSNS戦略で月間リーチ100万達成",
+    date: "2024.04.01",
+    category: "採用戦略",
+    title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
   },
 ];
 
@@ -57,26 +61,29 @@ export function Case() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: index * 0.2 }}
               viewport={{ once: true }}
-              className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100"
             >
-              <div className="relative h-48">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-gray-500 text-sm">{item.date}</span>
-                  <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                    {item.category}
-                  </span>
+              <Link href={`/works/${item.id}`}>
+                <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100">
+                  <div className="relative h-48">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <span className="text-gray-500 text-sm">{item.date}</span>
+                      <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
+                        {item.category}
+                      </span>
+                    </div>
+                    <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
+                      {item.title}
+                    </h3>
+                  </div>
                 </div>
-                <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
-                  {item.title}
-                </h3>
-              </div>
+              </Link>
             </motion.div>
           ))}
         </div>
@@ -88,9 +95,9 @@ export function Case() {
           viewport={{ once: true }}
           className="text-center mt-20"
         >
-          <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity">
+          <Link href="/works" className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity">
             実績一覧
-          </button>
+          </Link>
         </motion.div>
       </div>
       

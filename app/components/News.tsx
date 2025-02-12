@@ -38,7 +38,7 @@ export function News() {
         >
           <p className="text-purple-600 text-lg tracking-widest mb-4">NEWS</p>
           <h2 className="text-5xl text-gray-900 font-bold">
-            最新情報
+            お知らせ
           </h2>
         </motion.div>
 
@@ -73,7 +73,7 @@ export function News() {
           className="text-center mt-20"
         >
           <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-lg font-medium hover:opacity-90 transition-opacity">
-            ニュース一覧
+            お知らせ一覧
           </button>
         </motion.div>
       </div>
