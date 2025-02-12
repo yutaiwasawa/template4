@@ -1,6 +1,7 @@
 import { WorkDetail } from "./WorkDetail";
 import { notion, getBlocks } from "@/lib/notion";
 import { redirect } from 'next/navigation';
+import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
 const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
 
@@ -185,7 +186,7 @@ async function getWork(id: string) {
         challenge: (response as any).properties.challenge?.rich_text[0]?.plain_text || "",
         solution: (response as any).properties.solution?.rich_text.map((text: any) => text.plain_text) || [],
         result: (response as any).properties.result?.rich_text[0]?.plain_text || "",
-        blocks: blocks,
+        blocks: blocks as PartialBlockObjectResponse[],
       },
       prevCase: prevCaseData,
       nextCase: nextCaseData

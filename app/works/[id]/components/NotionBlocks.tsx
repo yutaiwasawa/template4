@@ -1,15 +1,10 @@
 "use client";
 
 import { Fragment } from "react";
-
-type Block = {
-  type: string;
-  id: string;
-  [key: string]: any;
-};
+import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
 type NotionBlocksProps = {
-  blocks: Block[];
+  blocks: PartialBlockObjectResponse[];
 };
 
 // テキストの色に対応するTailwindクラスのマッピング
@@ -37,9 +32,9 @@ const colorMap = {
 
 export function NotionBlocks({ blocks }: NotionBlocksProps) {
   // リストアイテムをグループ化する関数
-  const groupListItems = (blocks: Block[]) => {
-    let currentList: Block[] = [];
-    const result: (Block | Block[])[] = [];
+  const groupListItems = (blocks: PartialBlockObjectResponse[]) => {
+    let currentList: PartialBlockObjectResponse[] = [];
+    const result: (PartialBlockObjectResponse | PartialBlockObjectResponse[])[] = [];
     let currentType: string | null = null;
 
     blocks.forEach((block) => {
@@ -106,14 +101,14 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
   };
 
   // 個別のブロックをレンダリングする関数
-  const renderBlock = (block: Block) => {
-    const { type, id } = block;
+  const renderBlock = (block: PartialBlockObjectResponse) => {
+    const { type, id } = block as any;
 
     switch (type) {
       case "paragraph":
         return (
           <p key={id} className="text-gray-600 mb-6">
-            {block.paragraph.rich_text.map((text: any, i: number) => (
+            {(block as any).paragraph.rich_text.map((text: any, i: number) => (
               <Fragment key={i}>{renderRichText(text)}</Fragment>
             ))}
           </p>
@@ -122,7 +117,7 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
       case "heading_1":
         return (
           <h1 key={id} className="text-3xl font-bold text-gray-900 mb-6">
-            {block.heading_1.rich_text.map((text: any, i: number) => (
+            {(block as any).heading_1.rich_text.map((text: any, i: number) => (
               <Fragment key={i}>{renderRichText(text)}</Fragment>
             ))}
           </h1>
@@ -131,7 +126,7 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
       case "heading_2":
         return (
           <h2 key={id} className="text-2xl font-bold text-gray-900 mb-4">
-            {block.heading_2.rich_text.map((text: any, i: number) => (
+            {(block as any).heading_2.rich_text.map((text: any, i: number) => (
               <Fragment key={i}>{renderRichText(text)}</Fragment>
             ))}
           </h2>
@@ -140,7 +135,7 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
       case "heading_3":
         return (
           <h3 key={id} className="text-xl font-bold text-gray-900 mb-4">
-            {block.heading_3.rich_text.map((text: any, i: number) => (
+            {(block as any).heading_3.rich_text.map((text: any, i: number) => (
               <Fragment key={i}>{renderRichText(text)}</Fragment>
             ))}
           </h3>
@@ -149,7 +144,7 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
       case "bulleted_list_item":
         return (
           <li key={id} className="text-gray-600">
-            {block.bulleted_list_item.rich_text.map((text: any, i: number) => (
+            {(block as any).bulleted_list_item.rich_text.map((text: any, i: number) => (
               <Fragment key={i}>{renderRichText(text)}</Fragment>
             ))}
           </li>
@@ -158,18 +153,18 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
       case "numbered_list_item":
         return (
           <li key={id} className="text-gray-600">
-            {block.numbered_list_item.rich_text.map((text: any, i: number) => (
+            {(block as any).numbered_list_item.rich_text.map((text: any, i: number) => (
               <Fragment key={i}>{renderRichText(text)}</Fragment>
             ))}
           </li>
         );
 
       case "image":
-        const imageUrl = block.image.type === "external" 
-          ? block.image.external.url 
-          : block.image.file.url;
-        const caption = block.image.caption?.length > 0 
-          ? block.image.caption[0].plain_text 
+        const imageUrl = (block as any).image.type === "external" 
+          ? (block as any).image.external.url 
+          : (block as any).image.file.url;
+        const caption = (block as any).image.caption?.length > 0 
+          ? (block as any).image.caption[0].plain_text 
           : "";
 
         return (
@@ -188,9 +183,9 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
         );
 
       case "video":
-        const videoUrl = block.video.type === "external"
-          ? convertYouTubeUrl(block.video.external.url)
-          : block.video.file.url;
+        const videoUrl = (block as any).video.type === "external"
+          ? convertYouTubeUrl((block as any).video.external.url)
+          : (block as any).video.file.url;
 
         return (
           <div key={id} className="mb-8 aspect-video">
@@ -215,7 +210,7 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
     <div className="max-w-none prose prose-purple">
       {groupedBlocks.map((block, index) => {
         if (Array.isArray(block)) {
-          if (block[0].type === "numbered_list_item") {
+          if ((block[0] as any).type === "numbered_list_item") {
             return (
               <ol key={`list-${index}`} className="list-decimal list-inside mb-6">
                 {block.map(item => renderBlock(item))}
