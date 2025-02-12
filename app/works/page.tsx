@@ -5,9 +5,10 @@ import Link from "next/link";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Image from "next/image";
+import { useProcessImage } from '../../hooks/useProcessImage';
 
 type Category = {
   id: string;
@@ -35,6 +36,59 @@ type SimplifiedCase = {
 };
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+// WorkCardを別コンポーネントとして切り出す
+const WorkCard = ({ 
+  work, 
+  index,
+  getCategoryName 
+}: { 
+  work: SimplifiedCase; 
+  index: number;
+  getCategoryName: (slug: string | undefined) => string;
+}) => {
+  const { processedUrl: coverImageUrl, isLoading } = useProcessImage(work.coverImage);
+
+  return (
+    <motion.div
+      key={work.id}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: index * 0.1 }}
+      viewport={{ once: true }}
+    >
+      <Link href={`/works/${work.id}`}>
+        <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100 hover:border-purple-300 transition-all duration-300">
+          <div className="relative h-48">
+            {isLoading ? (
+              <div className="w-full h-full bg-gray-200 animate-pulse" />
+            ) : (
+              <Image
+                src={coverImageUrl || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
+                alt={work.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                loading="lazy"
+              />
+            )}
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-gray-500 text-sm">{work.publishedAt}</span>
+              <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
+                {getCategoryName(work.category?.slug)}
+              </span>
+            </div>
+            <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
+              {work.title}
+            </h3>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+};
 
 export default function Works() {
   const [currentCategory, setCurrentCategory] = useState("all");
@@ -210,39 +264,12 @@ export default function Works() {
           {/* 実績一覧 */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {currentWorks.map((work: SimplifiedCase, index: number) => (
-              <motion.div
-                key={work.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Link href={`/works/${work.id}`}>
-                  <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100 hover:border-purple-300 transition-all duration-300">
-                    <div className="relative h-48">
-                      <Image
-                        src={work.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
-                        alt={work.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <span className="text-gray-500 text-sm">{work.publishedAt}</span>
-                        <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                          {getCategoryName(work.category?.slug)}
-                        </span>
-                      </div>
-                      <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
-                        {work.title}
-                      </h3>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
+              <WorkCard 
+                key={work.id} 
+                work={work} 
+                index={index} 
+                getCategoryName={getCategoryName}
+              />
             ))}
           </div>
 
