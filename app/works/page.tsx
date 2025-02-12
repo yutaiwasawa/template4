@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // カテゴリーデータ
 const categories = [
@@ -15,63 +15,36 @@ const categories = [
   { id: "recruitment", label: "採用戦略" },
 ];
 
-// 実績データを更新
-const cases = [
-  {
-    id: "case1",
-    title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
-    category: "new-business",
-    date: "2024.04.15",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
-    description: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
-  },
-  {
-    id: "case2",
-    title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
-    category: "organization",
-    date: "2024.04.08",
-    image: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80",
-    description: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
-  },
-  {
-    id: "case3",
-    title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
-    category: "recruitment",
-    date: "2024.04.01",
-    image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80",
-    description: "広告運用改善でCPA50%削減！アパレルECの実績報告",
-  },
-  {
-    id: "case4",
-    title: "MEO対策で来店客数2倍！飲食チェーンの集客改善事例",
-    category: "new-business",
-    date: "2024.03.25",
-    image: "https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?auto=format&fit=crop&q=80",
-    description: "MEO対策で来店客数2倍！飲食チェーンの集客改善事例",
-  },
-  {
-    id: "case5",
-    title: "コンテンツマーケティングでCVR120%改善！SaaS企業の事例",
-    category: "organization",
-    date: "2024.03.18",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80",
-    description: "コンテンツマーケティングでCVR120%改善！SaaS企業の事例",
-  }
-];
+type Work = {
+  id: string;
+  title: string;
+};
 
 export default function Works() {
   const [currentCategory, setCurrentCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [works, setWorks] = useState<Work[]>([]);
   const itemsPerPage = 6;
 
-  // カテゴリーでフィルタリング
-  const filteredCases = currentCategory === "all" 
-    ? cases 
-    : cases.filter(item => item.category === currentCategory);
+  useEffect(() => {
+    const fetchWorks = async () => {
+      try {
+        const response = await fetch('/api/notion/works');
+        const data = await response.json();
+        if (data.works) {
+          setWorks(data.works);
+        }
+      } catch (error) {
+        console.error('Failed to fetch works:', error);
+      }
+    };
+
+    fetchWorks();
+  }, []);
 
   // ページネーション
-  const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
-  const currentCases = filteredCases.slice(
+  const totalPages = Math.ceil(works.length / itemsPerPage);
+  const currentWorks = works.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -161,32 +134,32 @@ export default function Works() {
 
           {/* 実績一覧 */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentCases.map((item, index) => (
+            {currentWorks.map((work, index) => (
               <motion.div
-                key={item.id}
+                key={work.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Link href={`/works/${item.id}`}>
+                <Link href={`/works/${work.id}`}>
                   <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100 hover:border-purple-300 transition-all duration-300">
                     <div className="relative h-48">
                       <img
-                        src={item.image}
-                        alt={item.title}
+                        src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"
+                        alt={work.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-4 mb-4">
-                        <span className="text-gray-500 text-sm">{item.date}</span>
+                        <span className="text-gray-500 text-sm">2024.04.15</span>
                         <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                          {categories.find(cat => cat.id === item.category)?.label}
+                          マーケティング
                         </span>
                       </div>
                       <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
-                        {item.title}
+                        {work.title}
                       </h3>
                     </div>
                   </div>
