@@ -6,12 +6,7 @@ import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { NotionBlocks } from "./components/NotionBlocks";
-
-type Block = {
-  type: string;
-  id: string;
-  [key: string]: any;
-};
+import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
 type Category = {
   name: string;
@@ -30,13 +25,13 @@ type Case = {
   challenge: string;
   solution: string[];
   result: string;
-  blocks?: Block[];
+  blocks?: PartialBlockObjectResponse[];
 };
 
 type WorkDetailProps = {
   currentCase: Case;
-  prevCase?: Case;
-  nextCase?: Case;
+  prevCase?: Case | null;
+  nextCase?: Case | null;
 };
 
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
