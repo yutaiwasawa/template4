@@ -8,6 +8,7 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import { NotionBlocks } from "./components/NotionBlocks";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useProcessImage } from '../../../hooks/useProcessImage';
 
 type Block = {
   type: string;
@@ -52,46 +53,8 @@ type WorkDetailProps = {
   nextCase: SimplifiedCase | null;
 };
 
-// 画像処理用のカスタムフック
-const useProcessImage = (originalUrl: string | null) => {
-  const [processedUrl, setProcessedUrl] = useState<string | null>(originalUrl);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const processImage = async () => {
-      if (!originalUrl) return;
-      
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/uploadToCloudinary', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ imageUrl: originalUrl }),
-        });
-
-        const data = await response.json();
-        
-        if (data.success && data.cloudinaryUrl) {
-          setProcessedUrl(data.cloudinaryUrl);
-        }
-      } catch (error) {
-        console.error('Error processing image:', error);
-        setProcessedUrl(originalUrl); // エラー時は元のURLを使用
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    processImage();
-  }, [originalUrl]);
-
-  return { processedUrl, isLoading };
-};
-
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
-  const { processedUrl: coverImageUrl, isLoading: coverImageLoading } = useProcessImage(currentCase.coverImage);
+  const { processedUrl: coverImageUrl, isLoading } = useProcessImage(currentCase.coverImage);
 
   return (
     <motion.main
@@ -107,8 +70,8 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
       <section className="relative pt-24">
         <div className="relative h-[50vh] flex items-center">
           <div className="absolute inset-0">
-            {coverImageLoading ? (
-              <div>Loading...</div>
+            {isLoading ? (
+              <div className="w-full h-full bg-gray-200 animate-pulse rounded-2xl" />
             ) : (
               coverImageUrl && (
                 <Image
@@ -162,8 +125,8 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
           <div className="max-w-4xl mx-auto">
             {/* アイキャッチ画像 */}
             <div className="mb-16 rounded-2xl overflow-hidden">
-              {coverImageLoading ? (
-                <div>Loading...</div>
+              {isLoading ? (
+                <div className="w-full h-full bg-gray-200 animate-pulse rounded-2xl" />
               ) : (
                 coverImageUrl && (
                   <Image

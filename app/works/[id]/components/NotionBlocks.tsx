@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment } from "react";
+import { useProcessImage } from '../../../../hooks/useProcessImage';
+import Image from 'next/image';
 
 type Block = {
   type: string;
@@ -61,6 +63,33 @@ const colorMap = {
   purple_background: "bg-purple-100",
   pink_background: "bg-pink-100",
   red_background: "bg-red-100",
+};
+
+const ImageBlock = ({ value }: { value: any }) => {
+  const imageUrl = value.image?.file?.url || value.image?.external?.url;
+  const caption = value.image?.caption?.[0]?.plain_text || '';
+  const { processedUrl, isLoading } = useProcessImage(imageUrl);
+
+  return (
+    <div className="my-8">
+      {isLoading ? (
+        <div className="w-full aspect-video bg-gray-200 animate-pulse rounded-lg" />
+      ) : (
+        <Image
+          src={processedUrl || ''}
+          alt={caption}
+          width={1200}
+          height={675}
+          className="rounded-lg w-full"
+        />
+      )}
+      {caption && (
+        <p className="text-sm text-gray-500 mt-2 text-center">
+          {caption}
+        </p>
+      )}
+    </div>
+  );
 };
 
 export function NotionBlocks({ blocks }: NotionBlocksProps) {
@@ -193,24 +222,8 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
         );
 
       case "image":
-        const imageUrl = block.image?.type === "external" 
-          ? block.image.external?.url 
-          : block.image?.file?.url;
-        const caption = block.image?.caption?.length ? block.image.caption[0].plain_text : "";
-
         return (
-          <figure key={id} className="mb-8">
-            <img
-              src={imageUrl}
-              alt={caption}
-              className="w-full rounded-lg"
-            />
-            {caption && (
-              <figcaption className="mt-2 text-sm text-center text-gray-500">
-                {caption}
-              </figcaption>
-            )}
-          </figure>
+          <ImageBlock value={block} />
         );
 
       case "video":
