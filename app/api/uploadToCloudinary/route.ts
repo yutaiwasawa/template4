@@ -1,48 +1,44 @@
+import { v2 as cloudinary } from 'cloudinary';
 import { NextResponse } from 'next/server';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+
+// Cloudinaryの設定
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(request: Request) {
   try {
     const { imageUrl } = await request.json();
+    console.log('Received image URL:', imageUrl);
 
     if (!imageUrl) {
-      return NextResponse.json(
-        { error: 'Image URL is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Image URL is required" }, { status: 400 });
     }
 
-    // Notionの署名付きURLから画像を取得
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch image from Notion' },
-        { status: 500 }
-      );
-    }
+    // NotionのURLから画像を取得してCloudinaryにアップロード
+    const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
+      folder: 'notion-images', // Cloudinaryでの保存フォルダ
+      format: 'webp',
+      transformation: [
+        { width: 'auto', crop: 'scale' },
+        { quality: 'auto' },
+        { fetch_format: 'webp' }
+      ]
+    });
 
-    // 画像をArrayBufferとして取得
-    const imageBuffer = await imageResponse.arrayBuffer();
-    
-    // BufferをBase64に変換
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
-    const dataUri = `data:${imageResponse.headers.get('content-type')};base64,${base64Image}`;
+    console.log('Cloudinary upload response:', uploadResponse);
 
-    // Cloudinaryにアップロード
-    const cloudinaryUrl = await uploadToCloudinary(dataUri);
+    return NextResponse.json({
+      success: true,
+      cloudinaryUrl: uploadResponse.secure_url
+    });
 
-    if (!cloudinaryUrl) {
-      return NextResponse.json(
-        { error: 'Failed to upload image to Cloudinary' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ cloudinaryUrl });
   } catch (error) {
-    console.error('Error in uploadToCloudinary API:', error);
+    console.error('Error uploading to Cloudinary:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Failed to upload image to Cloudinary" },
       { status: 500 }
     );
   }

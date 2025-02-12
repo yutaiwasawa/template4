@@ -6,6 +6,8 @@ import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { NotionBlocks } from "./components/NotionBlocks";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 
 type Block = {
   type: string;
@@ -50,7 +52,47 @@ type WorkDetailProps = {
   nextCase: SimplifiedCase | null;
 };
 
+// 画像処理用のカスタムフック
+const useProcessImage = (originalUrl: string | null) => {
+  const [processedUrl, setProcessedUrl] = useState<string | null>(originalUrl);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const processImage = async () => {
+      if (!originalUrl) return;
+      
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/uploadToCloudinary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageUrl: originalUrl }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.cloudinaryUrl) {
+          setProcessedUrl(data.cloudinaryUrl);
+        }
+      } catch (error) {
+        console.error('Error processing image:', error);
+        setProcessedUrl(originalUrl); // エラー時は元のURLを使用
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    processImage();
+  }, [originalUrl]);
+
+  return { processedUrl, isLoading };
+};
+
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
+  const { processedUrl: coverImageUrl, isLoading: coverImageLoading } = useProcessImage(currentCase.coverImage);
+
   return (
     <motion.main
       initial={{ opacity: 0 }}
@@ -65,11 +107,19 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
       <section className="relative pt-24">
         <div className="relative h-[50vh] flex items-center">
           <div className="absolute inset-0">
-            <img
-              src={currentCase.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
-              alt={currentCase.title}
-              className="w-full h-full object-cover"
-            />
+            {coverImageLoading ? (
+              <div>Loading...</div>
+            ) : (
+              coverImageUrl && (
+                <Image
+                  src={coverImageUrl}
+                  alt={currentCase.title}
+                  className="w-full h-full object-cover"
+                  width={1200}
+                  height={630}
+                />
+              )
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600/95 to-pink-600/90" />
           </div>
           
@@ -112,11 +162,19 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
           <div className="max-w-4xl mx-auto">
             {/* アイキャッチ画像 */}
             <div className="mb-16 rounded-2xl overflow-hidden">
-              <img
-                src={currentCase.coverImage || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"}
-                alt={currentCase.title}
-                className="w-full aspect-video object-cover"
-              />
+              {coverImageLoading ? (
+                <div>Loading...</div>
+              ) : (
+                coverImageUrl && (
+                  <Image
+                    src={coverImageUrl}
+                    alt={currentCase.title}
+                    width={1200}
+                    height={630}
+                    className="w-full aspect-video object-cover"
+                  />
+                )
+              )}
             </div>
 
             {/* 基本情報 */}
