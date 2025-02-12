@@ -23,6 +23,17 @@ type Work = {
   coverImage?: string | null;
 };
 
+type SimplifiedCase = {
+  id: string;
+  title: string;
+  category: {
+    name: string;
+    slug: string;
+  };
+  publishedAt: string;
+  coverImage: string;
+};
+
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function Works() {
@@ -50,7 +61,7 @@ export default function Works() {
   // カテゴリーでフィルタリングされた記事を取得
   const filteredWorks = currentCategory === "all"
     ? works
-    : works.filter(work => work.category === currentCategory);
+    : works.filter((work: Work) => work.category === currentCategory);
 
   // ページネーション
   const totalPages = Math.ceil(filteredWorks.length / itemsPerPage);
