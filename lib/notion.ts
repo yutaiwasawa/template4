@@ -9,6 +9,29 @@ export const notion = new Client({
   auth: process.env.NOTION_API_KEY || 'dummy-key-for-development',
 });
 
+// 画像URLをCloudinaryに変換する関数
+async function convertToCloudinaryUrl(imageUrl: string) {
+  try {
+    const response = await fetch('/api/uploadToCloudinary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageUrl }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload to Cloudinary');
+    }
+
+    const data = await response.json();
+    return data.cloudinaryUrl;
+  } catch (error) {
+    console.error('Error converting to Cloudinary URL:', error);
+    return imageUrl; // エラー時は元のURLを返す
+  }
+}
+
 // ブロックの取得
 export async function getBlocks(blockId: string): Promise<PartialBlockObjectResponse[]> {
   try {
@@ -21,7 +44,27 @@ export async function getBlocks(blockId: string): Promise<PartialBlockObjectResp
         start_cursor: cursor,
       });
 
-      blocks.push(...results);
+      // 画像ブロックの処理
+      const processedResults = await Promise.all(
+        results.map(async (block: any) => {
+          if (block.type === 'image') {
+            const imageUrl = block.image.type === 'external' 
+              ? block.image.external.url 
+              : block.image.file.url;
+            
+            const cloudinaryUrl = await convertToCloudinaryUrl(imageUrl);
+            
+            if (block.image.type === 'external') {
+              block.image.external.url = cloudinaryUrl;
+            } else {
+              block.image.file.url = cloudinaryUrl;
+            }
+          }
+          return block;
+        })
+      );
+
+      blocks.push(...processedResults);
       
       if (!next_cursor) {
         break;
