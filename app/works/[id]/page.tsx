@@ -55,8 +55,11 @@ async function getCategoryName(categoryId: string) {
 // 個別記事のデータを取得
 async function getWork(id: string) {
   try {
-    // APIエンドポイントを使用してデータを取得
-    console.log('Fetching URL:', `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`); // URLの確認用
+    // // APIエンドポイントを使用してデータを取得
+    // console.log('Fetching URL:', `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`); // URLの確認用
+    // 一時的にURLをハードコード
+    const baseUrl = 'https://template4-git-feat-isr2-yutaiwasawas-projects.vercel.app';
+    console.log('Fetching URL:', `${baseUrl}/api/notion/works/${id}`);    
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`,
