@@ -1,60 +1,17 @@
-"use client";
+'use client';
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Header } from "../../components/Header";
-import { Footer } from "../../components/Footer";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { NotionBlocks } from "./components/NotionBlocks";
-import { useState, useEffect } from "react";
+import { NotionBlocks } from "./components/NotionBlocks";  // パスを修正
 import Image from "next/image";
 import { useProcessImage } from '../../../hooks/useProcessImage';
-
-type Block = {
-  type: string;
-  id: string;
-  [key: string]: any;
-};
-
-type Category = {
-  name: string;
-  slug: string;
-};
-
-type Case = {
-  id: string;
-  title: string;
-  category: Category;
-  publishedAt: string;
-  client: string;
-  period: string;
-  coverImage: string | null;
-  description: string;
-  challenge: string;
-  solution: string[];
-  result: string;
-  blocks?: Block[];
-};
-
-type SimplifiedCase = {
-  id: string;
-  title: string;
-  category: {
-    name: string;
-    slug: string;
-  };
-  publishedAt: string;
-  coverImage: string;
-};
-
-type WorkDetailProps = {
-  currentCase: Case;
-  prevCase: SimplifiedCase | null;
-  nextCase: SimplifiedCase | null;
-};
+import type { WorkDetailProps } from "../../../types/work";
 
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
-  const { processedUrl: coverImageUrl, isLoading } = useProcessImage(currentCase.coverImage);
+  const { processedUrl: coverImageUrl, isLoading } = useProcessImage(currentCase.coverImage || '');
 
   return (
     <motion.main
@@ -110,10 +67,14 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
                   {currentCase.category.name}
                 </span>
               </div>
-
-              <h1 className="text-4xl md:text-5xl text-white font-bold mb-8">
+              
+              <h1 className="text-4xl font-bold text-white mb-6">
                 {currentCase.title}
               </h1>
+              
+              <p className="text-lg text-purple-100">
+                {currentCase.description}
+              </p>
             </motion.div>
           </div>
         </div>

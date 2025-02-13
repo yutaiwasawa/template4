@@ -1,7 +1,7 @@
 // app/api/notion/works/[id]/route.ts
-import { notion } from "@/lib/notion";
+import { notion } from "../../../../../lib/notion";
 import { NextResponse } from "next/server";
-import { getCategoryName, getBlocks } from "@/lib/notion-utils";
+import { getCategoryName, getBlocks } from "../../../../../lib/notion-utils";
 
 // DEFAULT_COVER_IMAGEを直接定義（route.tsから移植）
 const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";

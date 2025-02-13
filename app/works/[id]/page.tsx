@@ -1,65 +1,30 @@
 import { WorkDetail } from "./WorkDetail";
-import { notion, getBlocks } from "@/lib/notion";
+import { notion } from "../../../lib/notion";
 import { redirect } from 'next/navigation';
-
-// 型定義
-type Work = {
-  id: string;
-  title: string;
-  category: {
-    name: string;
-    slug: string;
-  };
-  publishedAt: string;
-  client: string;
-  period: string;
-  coverImage: string;
-  description: string;
-  challenge: string;
-  solution: string[];
-  result: string;
-  blocks: Block[];
-};
-
-type WorkDetailProps = {
-  currentCase: Work;
-  prevCase: Work | null;
-  nextCase: Work | null;
-};
-
-type Block = {
-  type: string;
-  id: string;
-  [key: string]: any;
-};
+import type { Case, SimplifiedCase } from "../../../types/work";
+import type { BlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
 const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
 
-// 静的パラメータを生成
-export async function generateStaticParams() {
-  if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
-    return [{ id: '1' }, { id: '2' }, { id: '3' }];
-  }
-
-  try {
-    const response = await notion.databases.query({
-      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
-      filter: {
-        property: "status",
-        select: {
-          equals: "published"
-        }
-      },
-    });
-
-    return response.results.map((page) => ({
-      id: page.id,
-    }));
-  } catch (error) {
-    console.error('Failed to generate static params:', error);
-    return [];
-  }
-}
+// モックデータ
+const MOCK_CASE: Case = {
+  id: "mock-id",
+  title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
+  category: { name: "マーケティング", slug: "marketing" },
+  publishedAt: "2024.03.15",
+  client: "株式会社サンプル",
+  period: "2024年1月〜2024年3月",
+  coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
+  description: "化粧品ブランドのSNSマーケティング施策の事例です。",
+  challenge: "SNSでのエンゲージメント率が低く、ブランドの認知度向上が課題でした。",
+  solution: [
+    "ターゲット層の分析と投稿内容の最適化",
+    "インフルエンサーマーケティングの活用",
+    "広告運用の改善"
+  ],
+  result: "施策実施後、月間エンゲージメント率が200%増加し、商品の売上も150%向上しました。",
+  blocks: []
+};
 
 // カテゴリー名を取得する関数
 async function getCategoryName(categoryId: string) {
@@ -77,54 +42,48 @@ async function getCategoryName(categoryId: string) {
   }
 }
 
-// 個別記事のデータを取得
-async function getWork(id: string) {
+async function getWork(id: string): Promise<{ 
+  currentCase: Case; 
+  prevCase: SimplifiedCase | null; 
+  nextCase: SimplifiedCase | null; 
+}> {
   try {
-    if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
+    if (process.env.NODE_ENV === 'development') {
       return {
-        currentCase: {
-          id: id,
-          title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
-          category: { name: "マーケティング", slug: "marketing" },
-          publishedAt: "2024.03.15",
-          client: "株式会社サンプル",
-          period: "2024年1月〜2024年3月",
-          coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
-          description: "化粧品ブランドのSNSマーケティング施策の事例です。",
-          challenge: "SNSでのエンゲージメント率が低く、ブランドの認知度向上が課題でした。",
-          solution: [
-            "ターゲット層の分析と投稿内容の最適化",
-            "インフルエンサーマーケティングの活用",
-            "広告運用の改善"
-          ],
-          result: "施策実施後、月間エンゲージメント率が200%増加し、商品の売上も150%向上しました。",
-          blocks: []
-        },
+        currentCase: MOCK_CASE,
         prevCase: null,
         nextCase: null
       };
     }
 
     const page = await notion.pages.retrieve({ page_id: id });
-    const blocks = await getBlocks(id);
+    const blocks = await notion.blocks.children.list({ 
+      block_id: id,
+      page_size: 100
+    });
 
-    const currentCase = {
+    const category = (page as any).properties.category?.relation?.[0]?.id 
+      ? await getCategoryName((page as any).properties.category.relation[0].id)
+      : { name: "その他", slug: "" };
+
+    // coverImageの処理を単純化
+    const coverImage = (page as any).cover?.external?.url || 
+                      (page as any).cover?.file?.url || 
+                      DEFAULT_COVER_IMAGE;
+
+    const currentCase: Case = {
       id: page.id,
       title: (page as any).properties.title.title[0]?.plain_text || "",
-      category: {
-        name: (page as any).properties.category?.relation?.[0]?.id 
-          ? await getCategoryName((page as any).properties.category.relation[0].id)
-          : { name: "その他", slug: "" }
-      },
+      category,
       publishedAt: (page as any).properties.publishedAt?.date?.start || "",
       client: (page as any).properties.client?.rich_text?.[0]?.plain_text || "",
       period: (page as any).properties.period?.rich_text?.[0]?.plain_text || "",
-      coverImage: (page as any).cover?.external?.url || (page as any).cover?.file?.url || DEFAULT_COVER_IMAGE,
+      coverImage,  // 生のURLをそのまま使用
       description: (page as any).properties.description?.rich_text?.[0]?.plain_text || "",
       challenge: (page as any).properties.challenge?.rich_text?.[0]?.plain_text || "",
       solution: (page as any).properties.solution?.rich_text?.map((text: any) => text.plain_text) || [],
       result: (page as any).properties.result?.rich_text?.[0]?.plain_text || "",
-      blocks: blocks
+      blocks: blocks.results as BlockObjectResponse[]
     };
 
     return {
@@ -135,11 +94,17 @@ async function getWork(id: string) {
 
   } catch (error) {
     console.error('Failed to fetch work:', error);
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        currentCase: MOCK_CASE,
+        prevCase: null,
+        nextCase: null
+      };
+    }
     throw error;
   }
 }
 
-// ISRの設定
 export const revalidate = 60;
 
 export default async function Page({ params }: { params: { id: string } }) {
@@ -152,11 +117,13 @@ export default async function Page({ params }: { params: { id: string } }) {
     }
 
     return (
-      <WorkDetail
-        currentCase={workData.currentCase as Work}
-        prevCase={workData.prevCase as Work | null}
-        nextCase={workData.nextCase as Work | null}
-      />
+      <div className="min-h-screen">
+        <WorkDetail
+          currentCase={workData.currentCase}
+          prevCase={workData.prevCase}
+          nextCase={workData.nextCase}
+        />
+      </div>
     );
   } catch (error) {
     console.error('Error in Page component:', error);
