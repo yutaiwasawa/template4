@@ -1,6 +1,7 @@
 import { WorkDetail } from "./WorkDetail";
 import { notion, getBlocks } from "@/lib/notion";
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';  // 追加
 
 type Block = {
   type: string;
@@ -55,33 +56,57 @@ async function getCategoryName(categoryId: string) {
 // 個別記事のデータを取得
 async function getWork(id: string) {
   try {
-    // // APIエンドポイントを使用してデータを取得
-    // console.log('Fetching URL:', `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`); // URLの確認用
-    // 一時的にURLをハードコード
-    // 相対パスを使用
-    console.log('Fetching URL:', `/api/notion/works/${id}`);
+    // 開発環境でAPIキーが設定されていない場合はダミーデータを返す
+    if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
+      return {
+        currentCase: {
+          id: id,
+          title: "SNSマーケティングで月間エンゲージメント200%増！化粧品ブランドの事例",
+          category: { name: "マーケティング", slug: "marketing" },
+          publishedAt: "2024.03.15",
+          client: "株式会社サンプル",
+          period: "2024年1月〜2024年3月",
+          coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80",
+          description: "化粧品ブランドのSNSマーケティング施策の事例です。",
+          challenge: "SNSでのエンゲージメント率が低く、ブランドの認知度向上が課題でした。",
+          solution: [
+            "ターゲット層の分析と投稿内容の最適化",
+            "インフルエンサーマーケティングの活用",
+            "広告運用の改善"
+          ],
+          result: "施策実施後、月間エンゲージメント率が200%増加し、商品の売上も150%向上しました。",
+          blocks: []
+        },
+        prevCase: null,
+        nextCase: null
+      };
+    }
+
+    // 現在のホストを動的に取得
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    const host = headers().get('host') || process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '');
+    
+    console.log('Fetching URL:', `${protocol}://${host}/api/notion/works/${id}`);
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`,
+      `${protocol}://${host}/api/notion/works/${id}`,
       {
-        next: {
-          revalidate: 60
-        }
+        next: { revalidate: 60 }
       }
     );
 
     if (!res.ok) {
-      console.error('API Response not OK:', await res.text()); // エラーの詳細を確認
+      console.error('API Response not OK:', await res.text());
       throw new Error('Failed to fetch work');
     }
 
     const data = await res.json();
-    console.log('Fetched data:', data); // 取得したデータの確認
+    console.log('Fetched data:', data);
     return data;
 
   } catch (error) {
     console.error('Failed to fetch work:', error);
-    throw error; // エラーをスローして、親コンポーネントで処理
+    throw error;
   }
 }
 
