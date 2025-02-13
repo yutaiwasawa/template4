@@ -81,121 +81,21 @@ async function getWork(id: string) {
   }
 
   try {
-    // すべての公開記事を取得
-    const allWorksResponse = await notion.databases.query({
-      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
-      filter: {
-        property: "status",
-        select: {
-          equals: "published"
-        }
-      },
-      sorts: [
-        {
-          timestamp: "created_time",
-          direction: "descending"
-        }
-      ]
-    });
-
-    // 現在の記事のインデックスを見つける
-    const currentIndex = allWorksResponse.results.findIndex(page => page.id === id);
-    
-    // 前後の記事を取得
-    const prevWork = currentIndex < allWorksResponse.results.length - 1 
-      ? allWorksResponse.results[currentIndex + 1] 
-      : null;
-    const nextWork = currentIndex > 0 
-      ? allWorksResponse.results[currentIndex - 1] 
-      : null;
-
-    // 現在の記事の詳細を取得
-    const response = await notion.pages.retrieve({
-      page_id: id,
-    });
-
-    // 非公開の記事の場合はnullを返す
-    if ((response as any).properties.status?.select?.name !== "published") {
-      return null;
-    }
-
-    // カテゴリー情報を取得
-    const categoryRelation = (response as any).properties.category?.relation?.[0];
-    const category = categoryRelation
-      ? await getCategoryName(categoryRelation.id)
-      : { name: "その他", slug: "" };
-
-    // featuredImageプロパティから画像URLを取得
-    let coverImage = DEFAULT_COVER_IMAGE;
-    const featuredImage = (response as any).properties.featuredImage?.files?.[0];
-    if (featuredImage) {
-      if (featuredImage.type === 'external') {
-        coverImage = featuredImage.external.url;
-      } else if (featuredImage.type === 'file') {
-        coverImage = featuredImage.file.url;
-      }
-    }
-
-    // ブロックの取得
-    const blocks = await getBlocks(id);
-
-    // 前後の記事の基本情報を取得
-    const getPrevNextWork = async (page: any) => {
-      if (!page) return null;
-      
-      const categoryId = page.properties.category?.relation?.[0]?.id;
-      const category = categoryId ? await getCategoryName(categoryId) : { name: "その他", slug: "" };
-      
-      let workCoverImage = DEFAULT_COVER_IMAGE;
-      const workFeaturedImage = page.properties.featuredImage?.files?.[0];
-      if (workFeaturedImage) {
-        if (workFeaturedImage.type === 'external') {
-          workCoverImage = workFeaturedImage.external.url;
-        } else if (workFeaturedImage.type === 'file') {
-          workCoverImage = workFeaturedImage.file.url;
+    // APIエンドポイントを使用してデータを取得
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`,
+      {
+        next: {
+          revalidate: 60 // 60秒ごとに再検証
         }
       }
+    );
 
-      return {
-        id: page.id,
-        title: page.properties.title.title[0]?.plain_text || "",
-        category,
-        publishedAt: new Date(page.created_time).toLocaleDateString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        }).replace(/\//g, '.'),
-        coverImage: workCoverImage
-      };
-    };
+    if (!res.ok) {
+      throw new Error('Failed to fetch work');
+    }
 
-    const [prevCaseData, nextCaseData] = await Promise.all([
-      getPrevNextWork(prevWork),
-      getPrevNextWork(nextWork)
-    ]);
-
-    return {
-      currentCase: {
-        id: response.id,
-        title: (response as any).properties.title.title[0]?.plain_text || "",
-        category,
-        publishedAt: new Date((response as any).created_time).toLocaleDateString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        }).replace(/\//g, '.'),
-        client: (response as any).properties.client?.rich_text[0]?.plain_text || "仮のクライアント名",
-        period: (response as any).properties.period?.rich_text[0]?.plain_text || "2024年1月〜2024年4月",
-        coverImage,
-        description: (response as any).properties.description?.rich_text[0]?.plain_text || "",
-        challenge: (response as any).properties.challenge?.rich_text[0]?.plain_text || "",
-        solution: (response as any).properties.solution?.rich_text.map((text: any) => text.plain_text) || [],
-        result: (response as any).properties.result?.rich_text[0]?.plain_text || "",
-        blocks: blocks as unknown as Block[],
-      },
-      prevCase: prevCaseData,
-      nextCase: nextCaseData
-    };
+    return res.json();
   } catch (error) {
     console.error('Failed to fetch work:', error);
     return null;
