@@ -78,7 +78,7 @@ export default function ClientContent({ initialData }: ClientContentProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const { data: categoriesData } = useSWR<{ categories: Category[] }>(
+  const { data: categoriesData, error: categoriesError } = useSWR<{ categories: Category[] }>(
     '/api/notion/categories', 
     fetcher, 
     {
@@ -89,7 +89,7 @@ export default function ClientContent({ initialData }: ClientContentProps) {
     }
   );
 
-  const { data: worksData } = useSWR<{ works: Work[] }>(
+  const { data: worksData, error: worksError } = useSWR<{ works: Work[] }>(
     '/api/notion/works', 
     fetcher, 
     {
@@ -101,7 +101,7 @@ export default function ClientContent({ initialData }: ClientContentProps) {
   );
 
   const isLoading = !categoriesData || !worksData;
-  const error = !categoriesData || !worksData;
+  const error = categoriesError || worksError;
   const categories = categoriesData?.categories || [];
   const works = worksData?.works || [];
 
@@ -123,6 +123,7 @@ export default function ClientContent({ initialData }: ClientContentProps) {
     const category = categories.find((cat: Category) => cat.slug === slug);
     return category?.name || "その他";
   };
+  
 
   // エラー表示
   if (error) {
@@ -131,7 +132,9 @@ export default function ClientContent({ initialData }: ClientContentProps) {
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <p className="text-red-600">エラーが発生しました: {error.message}</p>
+            <p className="text-red-600">
+                エラーが発生しました: {error?.message || 'データの取得に失敗しました'}
+            </p>
           </div>
         </div>
         <Footer />
