@@ -223,7 +223,7 @@ export function NotionBlocks({ blocks }: NotionBlocksProps) {
 
       case "image":
         return (
-          <ImageBlock value={block} />
+          <ImageBlock key={id} value={block} />
         );
 
       case "video":
