@@ -2,6 +2,31 @@ import { WorkDetail } from "./WorkDetail";
 import { notion, getBlocks } from "@/lib/notion";
 import { redirect } from 'next/navigation';
 
+// 型定義
+type Work = {
+  id: string;
+  title: string;
+  category: {
+    name: string;
+    slug: string;
+  };
+  publishedAt: string;
+  client: string;
+  period: string;
+  coverImage: string;
+  description: string;
+  challenge: string;
+  solution: string[];
+  result: string;
+  blocks: Block[];
+};
+
+type WorkDetailProps = {
+  currentCase: Work;
+  prevCase: Work | null;
+  nextCase: Work | null;
+};
+
 type Block = {
   type: string;
   id: string;
@@ -55,7 +80,6 @@ async function getCategoryName(categoryId: string) {
 // 個別記事のデータを取得
 async function getWork(id: string) {
   try {
-    // 開発環境でAPIキーが設定されていない場合はダミーデータを返す
     if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
       return {
         currentCase: {
@@ -81,29 +105,42 @@ async function getWork(id: string) {
       };
     }
 
-    console.log('Fetching URL:', `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`);
+    const page = await notion.pages.retrieve({ page_id: id });
+    const blocks = await getBlocks(id);
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`,
-      {
-        next: { revalidate: 60 }
-      }
-    );
+    const currentCase = {
+      id: page.id,
+      title: (page as any).properties.title.title[0]?.plain_text || "",
+      category: {
+        name: (page as any).properties.category?.relation?.[0]?.id 
+          ? await getCategoryName((page as any).properties.category.relation[0].id)
+          : { name: "その他", slug: "" }
+      },
+      publishedAt: (page as any).properties.publishedAt?.date?.start || "",
+      client: (page as any).properties.client?.rich_text?.[0]?.plain_text || "",
+      period: (page as any).properties.period?.rich_text?.[0]?.plain_text || "",
+      coverImage: (page as any).cover?.external?.url || (page as any).cover?.file?.url || DEFAULT_COVER_IMAGE,
+      description: (page as any).properties.description?.rich_text?.[0]?.plain_text || "",
+      challenge: (page as any).properties.challenge?.rich_text?.[0]?.plain_text || "",
+      solution: (page as any).properties.solution?.rich_text?.map((text: any) => text.plain_text) || [],
+      result: (page as any).properties.result?.rich_text?.[0]?.plain_text || "",
+      blocks: blocks
+    };
 
-    if (!res.ok) {
-      console.error('API Response not OK:', await res.text());
-      throw new Error('Failed to fetch work');
-    }
-
-    const data = await res.json();
-    console.log('Fetched data:', data);
-    return data;
+    return {
+      currentCase,
+      prevCase: null,
+      nextCase: null
+    };
 
   } catch (error) {
     console.error('Failed to fetch work:', error);
     throw error;
   }
 }
+
+// ISRの設定
+export const revalidate = 60;
 
 export default async function Page({ params }: { params: { id: string } }) {
   try {
@@ -116,9 +153,9 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <WorkDetail
-        currentCase={workData.currentCase}
-        prevCase={workData.prevCase}
-        nextCase={workData.nextCase}
+        currentCase={workData.currentCase as Work}
+        prevCase={workData.prevCase as Work | null}
+        nextCase={workData.nextCase as Work | null}
       />
     );
   } catch (error) {
