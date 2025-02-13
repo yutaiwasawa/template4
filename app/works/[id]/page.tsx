@@ -1,7 +1,6 @@
 import { WorkDetail } from "./WorkDetail";
 import { notion, getBlocks } from "@/lib/notion";
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';  // 追加
 
 type Block = {
   type: string;
@@ -82,14 +81,10 @@ async function getWork(id: string) {
       };
     }
 
-    // 現在のホストを動的に取得
-    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-    const host = headers().get('host') || process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '');
-    
-    console.log('Fetching URL:', `${protocol}://${host}/api/notion/works/${id}`);
+    console.log('Fetching URL:', `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`);
 
     const res = await fetch(
-      `${protocol}://${host}/api/notion/works/${id}`,
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works/${id}`,
       {
         next: { revalidate: 60 }
       }
