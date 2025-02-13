@@ -19,14 +19,14 @@ const dummyWorks: Work[] = [
     id: "2",
     title: "BtoBマーケティング戦略で受注率35%アップ！製造業の成功事例",
     publishedAt: "2024.03.10",
-    category: "branding",
+    category: { name: "ブランディング", slug: "branding" },
     coverImage: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80"
   },
   {
     id: "3",
     title: "広告運用改善でCPA50%削減！アパレルECの実績報告",
     publishedAt: "2024.03.05",
-    category: "recruitment",
+    category: { name: "リクルーティング", slug: "recruitment" },
     coverImage: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80"
   },
 ];
