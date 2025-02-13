@@ -1,4 +1,4 @@
-import { notion } from "@/lib/notion";
+import { notion } from "../../../../lib/notion";
 import { NextResponse } from "next/server";
 
 const dummyCategories = [
