@@ -3,6 +3,7 @@ import { notion } from "../../../lib/notion";
 import { redirect } from 'next/navigation';
 import type { Case, SimplifiedCase } from "../../../types/work";
 import type { BlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+import { getWorkNavigation } from "../../../lib/notion-utils";
 
 const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
 
@@ -124,10 +125,13 @@ async function getWork(id: string): Promise<{
       blocks: blocks.results as BlockObjectResponse[]
     };
 
+    // ナビゲーション情報を取得
+    const { prevCase, nextCase } = await getWorkNavigation(id);
+
     return {
       currentCase,
-      prevCase: null,
-      nextCase: null
+      prevCase,
+      nextCase
     };
 
   } catch (error) {
