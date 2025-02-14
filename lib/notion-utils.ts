@@ -96,4 +96,34 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
     console.error('Error fetching latest works:', error);
     return [];
   }
+}
+
+export async function getWorksByPage(page: number, perPage: number) {
+  const allWorks = await getWorks();
+  const start = (page - 1) * perPage;
+  const end = start + perPage;
+  
+  return {
+    works: allWorks.works.slice(start, end),
+    totalPages: Math.ceil(allWorks.works.length / perPage)
+  };
+}
+
+// getWorks関数も必要
+export async function getWorks() {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/notion/works`, {
+      next: { revalidate: 60 }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch works');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching works:', error);
+    return { works: [], categories: [] };
+  }
 } 

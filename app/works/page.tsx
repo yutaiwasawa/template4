@@ -18,11 +18,16 @@ async function getWorks() {
   }
 }
 
-// ページレベルでのrevalidate設定
-export const revalidate = 60;
-
-export default async function WorksPage() {
+export default async function WorksPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const currentPage = Number(searchParams.page) || 1;
   const initialData = await getWorks();
   
-  return <ClientContent initialData={initialData} />;
+  return <ClientContent 
+    initialData={initialData} 
+    currentPage={currentPage}
+  />;
 }

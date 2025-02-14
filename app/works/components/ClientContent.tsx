@@ -10,6 +10,7 @@ import useSWR from "swr";
 import Image from "next/image";
 import { useProcessImage } from '../../../hooks/useProcessImage';
 import { Work, Category } from '../../../types/work';
+import { useRouter } from 'next/navigation';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -71,11 +72,12 @@ type ClientContentProps = {
     works: Work[];
     categories: Category[];
   };
+  currentPage: number;
 };
 
-export default function ClientContent({ initialData }: ClientContentProps) {
+export default function ClientContent({ initialData, currentPage }: ClientContentProps) {
+  const router = useRouter();
   const [currentCategory, setCurrentCategory] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   const { data: categoriesData, error: categoriesError } = useSWR<{ categories: Category[] }>(
@@ -124,6 +126,21 @@ export default function ClientContent({ initialData }: ClientContentProps) {
     return category?.name || "その他";
   };
   
+  // ページ遷移関数
+  const handlePageChange = (page: number) => {
+    if (page === 1) {
+      router.push('/works');  // 1ページ目は?page=1を付けない
+    } else {
+      router.push(`/works?page=${page}`);
+    }
+  };
+
+  // カテゴリー切り替え時のハンドラー関数を修正
+  const handleCategoryChange = (category: string) => {
+    setCurrentCategory(category);
+    // カテゴリー変更時は1ページ目に戻す（URLをクリーンに）
+    router.push('/works');
+  };
 
   // エラー表示
   if (error) {
@@ -225,10 +242,7 @@ export default function ClientContent({ initialData }: ClientContentProps) {
             <div className="flex justify-center">
               <div className="inline-flex p-1 bg-white rounded-xl">
                 <button
-                  onClick={() => {
-                    setCurrentCategory("all");
-                    setCurrentPage(1);
-                  }}
+                  onClick={() => handleCategoryChange("all")}
                   className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     currentCategory === "all"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
@@ -240,10 +254,7 @@ export default function ClientContent({ initialData }: ClientContentProps) {
                 {categories.map((category: Category) => (
                   <button
                     key={category.id}
-                    onClick={() => {
-                      setCurrentCategory(category.slug);
-                      setCurrentPage(1);
-                    }}
+                    onClick={() => handleCategoryChange(category.slug)}
                     className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                       currentCategory === category.slug
                         ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
@@ -273,7 +284,11 @@ export default function ClientContent({ initialData }: ClientContentProps) {
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-12">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => {
+                  if (currentPage > 1) {
+                    handlePageChange(currentPage - 1);
+                  }
+                }}
                 disabled={currentPage === 1}
                 className="p-2 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -283,7 +298,9 @@ export default function ClientContent({ initialData }: ClientContentProps) {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
-                  onClick={() => setCurrentPage(page)}
+                  onClick={() => {
+                    handlePageChange(page);
+                  }}
                   className={`min-w-[2.5rem] h-10 rounded-lg flex items-center justify-center transition-colors ${
                     currentPage === page
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md"
@@ -295,7 +312,11 @@ export default function ClientContent({ initialData }: ClientContentProps) {
               ))}
 
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => {
+                  if (currentPage < totalPages) {
+                    handlePageChange(currentPage + 1);
+                  }
+                }}
                 disabled={currentPage === totalPages}
                 className="p-2 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
