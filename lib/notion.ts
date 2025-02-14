@@ -1,12 +1,15 @@
 import { Client } from "@notionhq/client";
 import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
-if (!process.env.NOTION_API_KEY) {
-  throw new Error("NOTION_API_KEY is not defined");
+// 開発環境でもAPIキーがある場合はそれを使用
+const apiKey = process.env.NOTION_API_KEY || (process.env.NODE_ENV === 'development' ? 'dummy-key-for-development' : undefined);
+
+if (!apiKey) {
+  throw new Error("NOTION_API_KEY is not defined in production");
 }
 
 export const notion = new Client({
-  auth: process.env.NOTION_API_KEY,
+  auth: apiKey
 });
 
 // 画像URLをCloudinaryに変換する関数

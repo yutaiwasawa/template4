@@ -78,47 +78,13 @@ export async function getWorkNavigation(currentId: string) {
 // 最新の実績3件を取得する関数
 export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[]> {
   try {
-    console.log('=== getLatestWorks Debug ===');
-    console.log('1. Environment:', process.env.NODE_ENV);
-    console.log('2. Database ID:', process.env.NOTION_WORKS_DATABASE_ID?.substring(0, 5) + '...');
-    console.log('3. Function Start');
-
-    const response = await notion.databases.query({
-      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
-      filter: {
-        property: "status",
-        select: { equals: "published" }
-      }
-      // sortsを一時的に削除
-    });
-
-    console.log('4. Query Success:', {
-      resultsCount: response.results.length,
-      hasResults: response.results.length > 0
-    });
-
-    const works = await Promise.all(response.results.map(async (page: any) => {
-      const categoryId = page.properties.category?.relation[0]?.id;
-      const category = categoryId 
-        ? await getCategoryName(categoryId)
-        : { name: "その他", slug: "" };
-
-      return {
-        id: page.id,
-        title: page.properties.title.title[0]?.plain_text || "",
-        coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
-        category,
-        publishedAt: page.properties.publishedAt?.date?.start || ""
-      };
-    }));
-
-    return works.slice(0, limit);
-  } catch (error: any) {
-    console.error('=== getLatestWorks Error ===');
-    console.error('Error type:', typeof error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/notion/works`);
+    if (!response.ok) throw new Error('Failed to fetch works');
+    const data = await response.json();
+    return data.works.slice(0, limit);
+  } catch (error) {
+    console.error('Error fetching latest works:', error);
     return [];
   }
 }
@@ -136,46 +102,58 @@ export async function getWorksByPage(page: number, perPage: number) {
 
 // getWorks関数も必要
 export async function getWorks() {
-  try {
-    const response = await notion.databases.query({
-      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
-      filter: {
-        property: "status",
-        select: { equals: "published" }
-      }
-      // sortsを一時的に削除
-    });
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      // 開発環境：APIルート経由
+      const response = await fetch('/api/notion/works');
+      if (!response.ok) throw new Error('Failed to fetch works');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching works:', error);
+      return { works: [], categories: [] };
+    }
+  } else {
+    // 本番環境：直接Notionアクセス
+    try {
+      const response = await notion.databases.query({
+        database_id: process.env.NOTION_WORKS_DATABASE_ID!,
+        filter: {
+          property: "status",
+          select: { equals: "published" }
+        }
+      });
 
-    // カテゴリー情報も取得
-    const categoriesResponse = await notion.databases.query({
-      database_id: process.env.NOTION_CATEGORIES_DATABASE_ID!
-    });
+      // カテゴリー情報も取得
+      const categoriesResponse = await notion.databases.query({
+        database_id: process.env.NOTION_CATEGORIES_DATABASE_ID!
+      });
 
-    // データを整形
-    const works = await Promise.all(response.results.map(async (page: any) => {
-      const categoryId = page.properties.category?.relation[0]?.id;
-      const category = categoryId 
-        ? await getCategoryName(categoryId)
-        : { name: "その他", slug: "" };
+      // データを整形
+      const works = await Promise.all(response.results.map(async (page: any) => {
+        const categoryId = page.properties.category?.relation[0]?.id;
+        const category = categoryId 
+          ? await getCategoryName(categoryId)
+          : { name: "その他", slug: "" };
 
-      return {
+        return {
+          id: page.id,
+          title: page.properties.title.title[0]?.plain_text || "",
+          coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
+          category,
+          publishedAt: page.properties.publishedAt?.date?.start || ""
+        };
+      }));
+
+      const categories = categoriesResponse.results.map((page: any) => ({
         id: page.id,
-        title: page.properties.title.title[0]?.plain_text || "",
-        coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
-        category,
-        publishedAt: page.properties.publishedAt?.date?.start || ""
-      };
-    }));
+        name: page.properties.name.title[0]?.plain_text || "",
+        slug: page.properties.slug.rich_text[0]?.plain_text || ""
+      }));
 
-    const categories = categoriesResponse.results.map((page: any) => ({
-      id: page.id,
-      name: page.properties.name.title[0]?.plain_text || "",
-      slug: page.properties.slug.rich_text[0]?.plain_text || ""
-    }));
-
-    return { works, categories };
-  } catch (error) {
-    console.error('Error details:', error);
-    return { works: [], categories: [] };
+      return { works, categories };
+    } catch (error) {
+      console.error('Error details:', error);
+      return { works: [], categories: [] };
+    }
   }
 } 

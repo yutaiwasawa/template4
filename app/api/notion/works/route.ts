@@ -1,6 +1,7 @@
 import { notion } from "../../../../lib/notion";
 import { NextResponse } from "next/server";
 import { Work } from '../../../../types/work';
+import { getCategoryName } from '../../../../lib/notion-utils';
 
 const DEFAULT_COVER_IMAGE = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80";
 
@@ -35,72 +36,57 @@ export const revalidate = 60; // 60秒ごとに再検証
 
 export async function GET() {
   try {
-    // 開発環境でAPIキーが設定されていない場合はダミーデータを返す
-    if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
-      return NextResponse.json({ works: dummyWorks });
+    console.log('=== API Debug ===');
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('API Key:', process.env.NOTION_API_KEY?.substring(0, 5) + '...');
+    console.log('Works DB ID:', process.env.NOTION_WORKS_DATABASE_ID);
+    console.log('Categories DB ID:', process.env.NOTION_CATEGORIES_DATABASE_ID);
+
+    // APIキーがない場合はダミーデータを返す
+    if (!process.env.NOTION_API_KEY || !process.env.NOTION_WORKS_DATABASE_ID) {
+      console.log('Using dummy data due to missing credentials');
+      return NextResponse.json({ works: dummyWorks, categories: [] });
     }
 
     const response = await notion.databases.query({
-      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
+      database_id: process.env.NOTION_WORKS_DATABASE_ID,
       filter: {
         property: "status",
-        select: {
-          equals: "published"
-        }
-      },
+        select: { equals: "published" }
+      }
     });
 
-    const works: Work[] = await Promise.all(response.results.map(async (page: any) => {
-      // カテゴリーのリレーション情報を取得
-      const categoryRelation = page.properties.category?.relation?.[0];
-      let category = null;
+    // カテゴリーデータの取得
+    const categoriesResponse = await notion.databases.query({
+      database_id: process.env.NOTION_CATEGORIES_DATABASE_ID!
+    });
 
-      if (categoryRelation) {
-        try {
-          // リレーション先のカテゴリーページを取得
-          const categoryPage = await notion.pages.retrieve({
-            page_id: categoryRelation.id,
-          });
-          // カテゴリー情報を構築
-          category = {
-            name: (categoryPage as any).properties.name?.title[0]?.plain_text || "",
-            slug: (categoryPage as any).properties.slug?.rich_text[0]?.plain_text || ""
-          };
-        } catch (error) {
-          console.error('Error fetching category:', error);
-        }
-      }
-
-      // 画像URLの取得ロジックを修正
-      let coverImage = DEFAULT_COVER_IMAGE;
-      const featuredImage = page.properties.Image?.files?.[0] ||
-                           page.properties.featuredImage?.files?.[0];
-      if (featuredImage) {
-        if (featuredImage.type === 'external') {
-          coverImage = featuredImage.external.url;
-        } else if (featuredImage.type === 'file') {
-          coverImage = featuredImage.file.url;
-        }
-      }
+    const works = await Promise.all(response.results.map(async (page: any) => {
+      const categoryId = page.properties.category?.relation[0]?.id;
+      const category = categoryId 
+        ? await getCategoryName(categoryId)
+        : { name: "その他", slug: "" };
 
       return {
         id: page.id,
-        title: page.properties.Name?.title[0]?.plain_text ||
-               page.properties.title?.title[0]?.plain_text || "",
-        publishedAt: new Date(page.last_edited_time).toLocaleDateString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        }).replace(/\//g, '.'),
+        title: page.properties.title.title[0]?.plain_text || "",
+        coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
         category,
-        coverImage
+        publishedAt: page.properties.publishedAt?.date?.start || ""
       };
     }));
 
-    return NextResponse.json({ works });
+    const categories = categoriesResponse.results.map((page: any) => ({
+      id: page.id,
+      name: page.properties.name.title[0]?.plain_text || "",
+      slug: page.properties.slug.rich_text[0]?.plain_text || ""
+    }));
+
+    return NextResponse.json({ works, categories });
   } catch (error) {
-    console.error('Error fetching works:', error);
-    // エラー時もダミーデータを返す
-    return NextResponse.json({ works: dummyWorks });
+    console.error('=== API Error ===');
+    console.error('Error details:', error);
+    // エラー時はダミーデータを返す（500エラーを避ける）
+    return NextResponse.json({ works: dummyWorks, categories: [] });
   }
 }
