@@ -31,48 +31,38 @@ export async function getBlocks(blockId: string) {
 // ナビゲーション用の関数
 export async function getWorkNavigation(currentId: string) {
   try {
+    // 単純に全ての公開記事を取得
     const response = await notion.databases.query({
       database_id: process.env.NOTION_WORKS_DATABASE_ID!,
       filter: {
         property: "status",
         select: { equals: "published" }
-      },
-      sorts: [{ property: "PublishedAt", direction: "descending" }]
+      }
+      // ソートは一旦なしで
     });
 
-    // デバッグログ追加
-    console.log('Navigation Query Response:', {
-      totalResults: response.results.length,
+    // デバッグ用
+    console.log('All published works:', {
+      total: response.results.length,
       currentId,
-      foundIndex: response.results.findIndex(page => page.id === currentId)
+      allIds: response.results.map(p => p.id)
     });
 
+    // 現在の記事の位置を見つける
     const currentIndex = response.results.findIndex(page => page.id === currentId);
 
-    // さらにデバッグログ
-    console.log('Navigation Data:', {
-      hasPrev: currentIndex < response.results.length - 1,
-      hasNext: currentIndex > 0,
-      prevId: currentIndex < response.results.length - 1 ? response.results[currentIndex + 1].id : null,
-      nextId: currentIndex > 0 ? response.results[currentIndex - 1].id : null
-    });
-
-    const getTitle = (page: PageObjectResponse) => {
-      const titleProperty = (page.properties.Name as { type: "title", title: Array<{ plain_text: string }> });
-      return titleProperty.title[0]?.plain_text ?? "";
-    };
-
-    const prevCase = currentIndex < response.results.length - 1 ? {
-      id: response.results[currentIndex + 1].id,
-      title: getTitle(response.results[currentIndex + 1] as PageObjectResponse),
+    // 前後の記事を取得
+    const prevCase = currentIndex > 0 ? {
+      id: response.results[currentIndex - 1].id,
+      title: (response.results[currentIndex - 1] as any).properties.title.title[0].plain_text,
       category: { name: "その他", slug: "" },
       publishedAt: "",
       coverImage: DEFAULT_COVER_IMAGE
     } : null;
 
-    const nextCase = currentIndex > 0 ? {
-      id: response.results[currentIndex - 1].id,
-      title: getTitle(response.results[currentIndex - 1] as PageObjectResponse),
+    const nextCase = currentIndex < response.results.length - 1 ? {
+      id: response.results[currentIndex + 1].id,
+      title: (response.results[currentIndex + 1] as any).properties.title.title[0].plain_text,
       category: { name: "その他", slug: "" },
       publishedAt: "",
       coverImage: DEFAULT_COVER_IMAGE
@@ -80,7 +70,7 @@ export async function getWorkNavigation(currentId: string) {
 
     return { prevCase, nextCase };
   } catch (error) {
-    console.error('Error fetching navigation:', error);
+    console.error('Error in getWorkNavigation:', error);
     return { prevCase: null, nextCase: null };
   }
 } 
