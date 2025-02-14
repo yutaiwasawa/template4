@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { Header } from "../../components/Header";
+import { Footer } from "../../components/Footer";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { NotionBlocks } from "./components/NotionBlocks";  // パスを修正
 import Image from "next/image";
