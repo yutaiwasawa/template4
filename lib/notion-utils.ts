@@ -78,13 +78,11 @@ export async function getWorkNavigation(currentId: string) {
 // 最新の実績3件を取得する関数
 export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[]> {
   try {
-    // 環境変数の詳細なチェック
-    console.log('Environment:', process.env.NODE_ENV);
-    console.log('API Key length:', process.env.NOTION_API_KEY?.length);
-    console.log('API Key prefix:', process.env.NOTION_API_KEY?.substring(0, 7));
-    
-    // Notionクライアントの状態確認
-    console.log('Notion client config:', notion);
+    // より詳細なデバッグ情報
+    console.log('=== getLatestWorks Debug ===');
+    console.log('1. Environment:', process.env.NODE_ENV);
+    console.log('2. Database ID:', process.env.NOTION_WORKS_DATABASE_ID?.substring(0, 5) + '...');
+    console.log('3. Function Start');
 
     const response = await notion.databases.query({
       database_id: process.env.NOTION_WORKS_DATABASE_ID!,
@@ -109,7 +107,10 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
       throw error;
     });
 
-    console.log('Notion response:', response);
+    console.log('4. Query Success:', {
+      resultsCount: response.results.length,
+      hasResults: response.results.length > 0
+    });
 
     const works = await Promise.all(response.results.map(async (page: any) => {
       const categoryId = page.properties.category?.relation[0]?.id;
@@ -127,8 +128,12 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
     }));
 
     return works.slice(0, limit);
-  } catch (error) {
-    console.error('Full error object:', JSON.stringify(error, null, 2));
+  } catch (error: any) {
+    console.error('=== getLatestWorks Error ===');
+    console.error('Error type:', typeof error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     return [];
   }
 }
