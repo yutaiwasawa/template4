@@ -89,15 +89,68 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
   }
 }
 
-export async function getWorksByPage(page: number, perPage: number) {
-  const allWorks = await getWorks();
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
-  
-  return {
-    works: allWorks.works.slice(start, end),
-    totalPages: Math.ceil(allWorks.works.length / perPage)
-  };
+export async function getWorksByPage(page: number = 1, perPage: number = 6) {
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const response = await fetch('/api/notion/works');
+      if (!response.ok) throw new Error('Failed to fetch works');
+      const data = await response.json();
+      
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      return {
+        works: data.works.slice(start, end),
+        categories: data.categories,
+        totalPages: Math.ceil(data.works.length / perPage)
+      };
+    } catch (error) {
+      console.error('Error fetching works:', error);
+      return { works: [], categories: [], totalPages: 0 };
+    }
+  } else {
+    // 本番環境：直接Notionアクセス
+    try {
+      const response = await notion.databases.query({
+        database_id: process.env.NOTION_WORKS_DATABASE_ID!,
+        filter: {
+          property: "status",
+          select: { equals: "published" }
+        }
+      });
+
+      // カテゴリー情報も取得
+      const categoriesResponse = await notion.databases.query({
+        database_id: process.env.NOTION_CATEGORIES_DATABASE_ID!
+      });
+
+      // データを整形
+      const works = await Promise.all(response.results.map(async (page: any) => {
+        const categoryId = page.properties.category?.relation[0]?.id;
+        const category = categoryId 
+          ? await getCategoryName(categoryId)
+          : { name: "その他", slug: "" };
+
+        return {
+          id: page.id,
+          title: page.properties.title.title[0]?.plain_text || "",
+          coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
+          category,
+          publishedAt: page.properties.publishedAt?.date?.start || ""
+        };
+      }));
+
+      const categories = categoriesResponse.results.map((page: any) => ({
+        id: page.id,
+        name: page.properties.name.title[0]?.plain_text || "",
+        slug: page.properties.slug.rich_text[0]?.plain_text || ""
+      }));
+
+      return { works, categories };
+    } catch (error) {
+      console.error('Error details:', error);
+      return { works: [], categories: [] };
+    }
+  }
 }
 
 // getWorks関数も必要
