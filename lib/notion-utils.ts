@@ -78,7 +78,6 @@ export async function getWorkNavigation(currentId: string) {
 // 最新の実績3件を取得する関数
 export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[]> {
   try {
-    // より詳細なデバッグ情報
     console.log('=== getLatestWorks Debug ===');
     console.log('1. Environment:', process.env.NODE_ENV);
     console.log('2. Database ID:', process.env.NOTION_WORKS_DATABASE_ID?.substring(0, 5) + '...');
@@ -89,22 +88,8 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
       filter: {
         property: "status",
         select: { equals: "published" }
-      },
-      sorts: [
-        {
-          property: "publishedAt",
-          direction: "descending"
-        }
-      ]
-    }).catch(error => {
-      // エラーの詳細をログ
-      console.error('Notion API Error:', {
-        name: error.name,
-        code: error.code,
-        status: error.status,
-        message: error.message
-      });
-      throw error;
+      }
+      // sortsを一時的に削除
     });
 
     console.log('4. Query Success:', {
@@ -157,13 +142,8 @@ export async function getWorks() {
       filter: {
         property: "status",
         select: { equals: "published" }
-      },
-      sorts: [
-        {
-          property: "publishedAt",
-          direction: "descending"
-        }
-      ]
+      }
+      // sortsを一時的に削除
     });
 
     // カテゴリー情報も取得
