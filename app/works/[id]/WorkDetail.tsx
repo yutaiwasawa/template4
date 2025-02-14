@@ -11,14 +11,6 @@ import { useProcessImage } from '../../../hooks/useProcessImage';
 import type { WorkDetailProps } from "../../../types/work";
 
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
-  // デバッグログ追加
-  console.log('WorkDetail Props:', { 
-    currentId: currentCase.id,
-    hasPrev: !!prevCase,
-    hasNext: !!nextCase,
-    prevTitle: prevCase?.title,
-    nextTitle: nextCase?.title
-  });
 
   const { processedUrl: coverImageUrl, isLoading } = useProcessImage(currentCase.coverImage || '');
 

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import type { SimplifiedCase } from "../../types/work";
 
 const cases = [
   {
@@ -27,7 +28,8 @@ const cases = [
   },
 ];
 
-export function Case() {
+// propsでworksを受け取るように変更
+export function Case({ works }: { works: SimplifiedCase[] }) {
   return (
     <section id="work" className="relative py-32 overflow-hidden">
       {/* 装飾的な背景 */}
@@ -54,38 +56,73 @@ export function Case() {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {cases.map((item, index) => (
+          {/* テスト用に実データとモックデータを併用 */}
+          {works.length > 0 ? works.map((work, index) => (
             <motion.div
-              key={index}
+              key={work.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: index * 0.2 }}
               viewport={{ once: true }}
             >
-              <Link href={`/works/${item.id}`}>
+              <Link href={`/works/${work.id}`}>
                 <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100">
                   <div className="relative h-48">
                     <img
-                      src={item.image}
-                      alt={item.title}
+                      src={work.coverImage}
+                      alt={work.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-4 mb-4">
-                      <span className="text-gray-500 text-sm">{item.date}</span>
+                      <span className="text-gray-500 text-sm">{work.publishedAt}</span>
                       <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                        {item.category}
+                        {work.category.name}
                       </span>
                     </div>
                     <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
-                      {item.title}
+                      {work.title}
                     </h3>
                   </div>
                 </div>
               </Link>
             </motion.div>
-          ))}
+          )) : (
+            // データが取得できない場合は既存のモックデータを表示
+            cases.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.2 }}
+                viewport={{ once: true }}
+              >
+                <Link href={`/works/${item.id}`}>
+                  <div className="group cursor-pointer bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-100">
+                    <div className="relative h-48">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-gray-500 text-sm">{item.date}</span>
+                        <span className="px-3 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
+                          {item.category}
+                        </span>
+                      </div>
+                      <h3 className="text-xl text-gray-900 font-bold group-hover:text-purple-600 transition-colors">
+                        {item.title}
+                      </h3>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))
+          )}
         </div>
 
         <motion.div
