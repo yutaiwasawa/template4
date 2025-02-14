@@ -142,8 +142,8 @@ export default function ClientContent({ initialData, currentPage }: ClientConten
   // カテゴリー切り替え時のハンドラー関数を修正
   const handleCategoryChange = (category: string) => {
     setCurrentCategory(category);
-    // カテゴリー変更時は1ページ目に戻す（URLをクリーンに）
-    router.push('/works');
+    // URLの変更のみ（ページ遷移なし）
+    window.history.pushState({}, '', '/works');
   };
 
   // ローディング中の表示
