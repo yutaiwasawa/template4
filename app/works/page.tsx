@@ -18,6 +18,9 @@ async function getWorks() {
   }
 }
 
+// ページレベルでのrevalidate設定
+export const revalidate = 60;
+
 export default async function WorksPage() {
   const initialData = await getWorks();
   

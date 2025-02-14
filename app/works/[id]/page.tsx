@@ -130,3 +130,28 @@ export default async function Page({ params }: { params: { id: string } }) {
     redirect('/works');
   }
 }
+
+export async function generateStaticParams() {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      return [{ id: 'mock-id' }];
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works`, {
+      next: { revalidate: 60 }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch works');
+    }
+
+    const data = await response.json();
+    return data.works.map((work: { id: string }) => ({
+      id: work.id
+    }));
+
+  } catch (error) {
+    console.error('Failed to generate params:', error);
+    return [{ id: 'mock-id' }];
+  }
+}

@@ -31,6 +31,8 @@ const dummyWorks: Work[] = [
   },
 ];
 
+export const revalidate = 60; // 60秒ごとに再検証
+
 export async function GET() {
   try {
     // 開発環境でAPIキーが設定されていない場合はダミーデータを返す
