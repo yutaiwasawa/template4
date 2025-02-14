@@ -79,9 +79,9 @@ export default function ClientContent({ initialData, currentPage }: ClientConten
   const [currentCategory, setCurrentCategory] = useState("all");
   const itemsPerPage = 6;
 
-  const { data: worksData, error: worksError } = useSWR<{ works: Work[]; categories: Category[] }>(
+  const { data: worksData, error: fetchError } = useSWR<{ works: Work[]; categories: Category[] }>(
     'works',
-    () => getWorks(),  // lib/notion-utils.tsの関数を使用
+    () => getWorks(),
     {
       fallbackData: initialData,
       revalidateOnFocus: false,
@@ -91,9 +91,25 @@ export default function ClientContent({ initialData, currentPage }: ClientConten
   );
 
   const isLoading = !worksData;
-  const error = worksError;
   const categories = worksData?.categories || [];
   const works = worksData?.works || [];
+
+  // エラー表示
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="pt-24 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-600">
+              データの取得に失敗しました
+            </p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   // カテゴリーでフィルタリングされた記事を取得
   const filteredWorks = currentCategory === "all"
@@ -129,23 +145,6 @@ export default function ClientContent({ initialData, currentPage }: ClientConten
     // カテゴリー変更時は1ページ目に戻す（URLをクリーンに）
     router.push('/works');
   };
-
-  // エラー表示
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <p className="text-red-600">
-                エラーが発生しました: {error?.message || 'データの取得に失敗しました'}
-            </p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   // ローディング中の表示
   if (isLoading) {

@@ -67,10 +67,22 @@ export async function GET() {
         ? await getCategoryName(categoryId)
         : { name: "その他", slug: "" };
 
+      // 画像URLの取得（既存の方法を維持）
+      let coverImage = DEFAULT_COVER_IMAGE;
+      const featuredImage = page.properties.Image?.files?.[0] ||
+                           page.properties.featuredImage?.files?.[0];
+      if (featuredImage) {
+        if (featuredImage.type === 'external') {
+          coverImage = featuredImage.external.url;
+        } else if (featuredImage.type === 'file') {
+          coverImage = featuredImage.file.url;
+        }
+      }
+
       return {
         id: page.id,
         title: page.properties.title.title[0]?.plain_text || "",
-        coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
+        coverImage,  // S3 URLをそのまま返す
         category,
         publishedAt: page.properties.publishedAt?.date?.start || ""
       };
