@@ -133,11 +133,12 @@ export default async function Page({ params }: { params: { id: string } }) {
 
 export async function generateStaticParams() {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      return [{ id: 'mock-id' }];
-    }
+    // 本番環境のURLを直接指定
+    const url = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}/api/notion/works`
+      : `${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works`;
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notion/works`, {
+    const response = await fetch(url, {
       next: { revalidate: 60 }
     });
 
@@ -151,7 +152,11 @@ export async function generateStaticParams() {
     }));
 
   } catch (error) {
-    console.error('Failed to generate params:', error);
+    // エラーログを詳細に
+    console.error('Failed to generate params:', error, {
+      VERCEL_URL: process.env.VERCEL_URL,
+      APP_URL: process.env.NEXT_PUBLIC_APP_URL
+    });
     return [{ id: 'mock-id' }];
   }
 }
