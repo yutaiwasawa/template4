@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 
+// URLキャッシュ用のMapを作成
+const urlCache = new Map<string, string>();
+
 export function useProcessImage(originalUrl: string) {
   const [processedUrl, setProcessedUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -10,7 +13,12 @@ export function useProcessImage(originalUrl: string) {
       return;
     }
 
-    setProcessedUrl(originalUrl);
+    // キャッシュをチェック
+    if (urlCache.has(originalUrl)) {
+      setProcessedUrl(urlCache.get(originalUrl)!);
+      setIsLoading(false);
+      return;
+    }
 
     async function processImage() {
       try {
@@ -25,9 +33,12 @@ export function useProcessImage(originalUrl: string) {
         if (!response.ok) throw new Error('Failed to process image');
         
         const data = await response.json();
+        // キャッシュに保存
+        urlCache.set(originalUrl, data.url);
         setProcessedUrl(data.url);
       } catch (error) {
         console.error('Error processing image:', error);
+        setProcessedUrl(originalUrl); // エラー時は元のURLを使用
       } finally {
         setIsLoading(false);
       }
