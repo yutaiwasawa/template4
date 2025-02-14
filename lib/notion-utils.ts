@@ -78,22 +78,27 @@ export async function getWorkNavigation(currentId: string) {
 // 最新の実績3件を取得する関数
 export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[]> {
   try {
-    // 完全なURLを構築
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const url = `${baseUrl}/api/notion/works`;
-    
-    const response = await fetch(url, {
-      next: { revalidate: 60 }
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+    console.log('Fetching from:', `${baseUrl}/api/notion/works`); // デバッグ用
+
+    const response = await fetch(`${baseUrl}/api/notion/works`, {
+      next: { revalidate: 60 },
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
     });
 
     if (!response.ok) {
+      console.error('Response not OK:', response.status, response.statusText);
       throw new Error('Failed to fetch works');
     }
 
     const data = await response.json();
+    console.log('Fetched data:', data); // デバッグ用
     return data.works.slice(0, limit);
   } catch (error) {
-    console.error('Error fetching latest works:', error);
+    console.error('Error details:', error);
     return [];
   }
 }

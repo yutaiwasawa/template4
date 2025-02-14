@@ -12,7 +12,17 @@ import { useProcessImage } from '../../../hooks/useProcessImage';
 import { Work, Category } from '../../../types/work';
 import { useRouter } from 'next/navigation';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = async (url: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}${url}`, {
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
+  });
+  if (!response.ok) throw new Error('Failed to fetch');
+  return response.json();
+};
 
 // WorkCardを別コンポーネントとして切り出す
 const WorkCard = ({ 
