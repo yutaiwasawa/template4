@@ -127,6 +127,9 @@ async function getWork(id: string): Promise<{
 
     // ナビゲーション情報を取得
     const { prevCase, nextCase } = await getWorkNavigation(id);
+    
+    // デバッグ用ログを追加
+    console.log('Navigation Data:', { prevCase, nextCase });
 
     return {
       currentCase,
@@ -147,7 +150,7 @@ async function getWork(id: string): Promise<{
   }
 }
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 export default async function Page({ params }: { params: { id: string } }) {
   try {

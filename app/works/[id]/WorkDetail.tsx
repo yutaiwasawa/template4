@@ -11,6 +11,15 @@ import { useProcessImage } from '../../../hooks/useProcessImage';
 import type { WorkDetailProps } from "../../../types/work";
 
 export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps) {
+  // デバッグログ追加
+  console.log('WorkDetail Props:', { 
+    currentId: currentCase.id,
+    hasPrev: !!prevCase,
+    hasNext: !!nextCase,
+    prevTitle: prevCase?.title,
+    nextTitle: nextCase?.title
+  });
+
   const { processedUrl: coverImageUrl, isLoading } = useProcessImage(currentCase.coverImage || '');
 
   return (
@@ -151,14 +160,12 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
             <div className="flex items-center pt-8 border-t border-gray-200">
               <div className="flex-1">
                 {prevCase ? (
-                  <Link
-                    href={`/works/${prevCase.id}`}
-                    className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5 mr-1" />
-                    前の記事
+                  <Link href={`/works/${prevCase.id}`}>
+                    <span>←前の記事: {prevCase.title}</span>
                   </Link>
-                ) : <div />}
+                ) : (
+                  <span>前の記事なし</span>
+                )}
               </div>
               <div className="flex-1 text-center">
                 <Link
@@ -169,14 +176,12 @@ export function WorkDetail({ currentCase, prevCase, nextCase }: WorkDetailProps)
                 </Link>
               </div>
               <div className="flex-1 text-right">
-                {nextCase && (
-                  <Link
-                    href={`/works/${nextCase.id}`}
-                    className="flex items-center justify-end text-purple-600 hover:text-purple-700 transition-colors"
-                  >
-                    次の記事
-                    <ChevronRight className="w-5 h-5 ml-1" />
+                {nextCase ? (
+                  <Link href={`/works/${nextCase.id}`}>
+                    <span>次の記事: {nextCase.title}→</span>
                   </Link>
+                ) : (
+                  <span>次の記事なし</span>
                 )}
               </div>
             </div>

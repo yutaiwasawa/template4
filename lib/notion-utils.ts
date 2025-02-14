@@ -4,6 +4,8 @@ import type {
   TitlePropertyItemObjectResponse,
   RichTextItemResponse 
 } from "@notionhq/client/build/src/api-endpoints";
+import type { SimplifiedCase } from "../types/work";
+import { DEFAULT_COVER_IMAGE } from "./constants";
 
 export async function getCategoryName(categoryId: string) {
   try {
@@ -26,12 +28,6 @@ export async function getBlocks(blockId: string) {
   return blocks.results;
 }
 
-// ナビゲーション用の型定義
-type NavigationCase = {
-  id: string;
-  title: string;
-};
-
 // ナビゲーション用の関数
 export async function getWorkNavigation(currentId: string) {
   try {
@@ -44,7 +40,22 @@ export async function getWorkNavigation(currentId: string) {
       sorts: [{ property: "PublishedAt", direction: "descending" }]
     });
 
+    // デバッグログ追加
+    console.log('Navigation Query Response:', {
+      totalResults: response.results.length,
+      currentId,
+      foundIndex: response.results.findIndex(page => page.id === currentId)
+    });
+
     const currentIndex = response.results.findIndex(page => page.id === currentId);
+
+    // さらにデバッグログ
+    console.log('Navigation Data:', {
+      hasPrev: currentIndex < response.results.length - 1,
+      hasNext: currentIndex > 0,
+      prevId: currentIndex < response.results.length - 1 ? response.results[currentIndex + 1].id : null,
+      nextId: currentIndex > 0 ? response.results[currentIndex - 1].id : null
+    });
 
     const getTitle = (page: PageObjectResponse) => {
       const titleProperty = (page.properties.Name as { type: "title", title: Array<{ plain_text: string }> });
@@ -53,12 +64,18 @@ export async function getWorkNavigation(currentId: string) {
 
     const prevCase = currentIndex < response.results.length - 1 ? {
       id: response.results[currentIndex + 1].id,
-      title: getTitle(response.results[currentIndex + 1] as PageObjectResponse)
+      title: getTitle(response.results[currentIndex + 1] as PageObjectResponse),
+      category: { name: "その他", slug: "" },
+      publishedAt: "",
+      coverImage: DEFAULT_COVER_IMAGE
     } : null;
 
     const nextCase = currentIndex > 0 ? {
       id: response.results[currentIndex - 1].id,
-      title: getTitle(response.results[currentIndex - 1] as PageObjectResponse)
+      title: getTitle(response.results[currentIndex - 1] as PageObjectResponse),
+      category: { name: "その他", slug: "" },
+      publishedAt: "",
+      coverImage: DEFAULT_COVER_IMAGE
     } : null;
 
     return { prevCase, nextCase };
