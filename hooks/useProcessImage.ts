@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 
 export function useProcessImage(originalUrl: string) {
-  const [processedUrl, setProcessedUrl] = useState(originalUrl);
+  const [processedUrl, setProcessedUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!originalUrl) {
+      setIsLoading(false);
+      return;
+    }
+
+    setProcessedUrl(originalUrl);
+
     async function processImage() {
-      if (!originalUrl) return;
-      
       try {
         const response = await fetch('/api/process-image', {
           method: 'POST',

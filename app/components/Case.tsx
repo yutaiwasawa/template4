@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import type { SimplifiedCase } from "../../types/work";
 import { useProcessImage } from "../../hooks/useProcessImage";
+import { useEffect, useState } from "react";
 
 const cases = [
   {
@@ -31,6 +32,19 @@ const cases = [
 
 // propsでworksを受け取るように変更
 export function Case({ works }: { works: SimplifiedCase[] }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  // 各workに対してフックを事前に初期化
+  const processedImages = works.map(work => useProcessImage(work.coverImage));
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <section id="work" className="relative py-32 overflow-hidden">
       {/* 装飾的な背景 */}
@@ -57,12 +71,8 @@ export function Case({ works }: { works: SimplifiedCase[] }) {
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {/* テスト用に実データとモックデータを併用 */}
           {works.length > 0 ? works.map((work, index) => {
-            // useProcessImageを使用
-            console.log('Before useProcessImage:', work.coverImage);  // デバッグ用に戻す
-            const { processedUrl: coverImageUrl, isLoading } = useProcessImage(work.coverImage);
-            console.log('After useProcessImage:', coverImageUrl);  // デバッグ用に戻す
+            const { processedUrl: coverImageUrl, isLoading } = processedImages[index];
             
             return (
               <motion.div
