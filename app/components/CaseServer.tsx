@@ -1,6 +1,8 @@
 import { Case } from "./Case";
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function CaseServer() {
+  noStore(); // キャッシュを無効化
   const works = await getLatestWorks();
   console.log('CaseServer works:', works);
   return <Case works={works} />;
