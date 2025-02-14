@@ -48,41 +48,80 @@ async function getWork(id: string): Promise<{
   nextCase: SimplifiedCase | null; 
 }> {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        currentCase: MOCK_CASE,
-        prevCase: null,
-        nextCase: null
-      };
-    }
+    // 一時的にコメントアウト
+    // if (process.env.NODE_ENV === 'development') {
+    //   return {
+    //     currentCase: MOCK_CASE,
+    //     prevCase: null,
+    //     nextCase: null
+    //   };
+    // }
 
     const page = await notion.pages.retrieve({ page_id: id });
+    
+    // より詳細なデバッグログ
+    console.log('Notion Page Raw Data:', {
+      id: page.id,
+      properties: (page as any).properties,
+      // プロパティ名を確認
+      propertyNames: Object.keys((page as any).properties),
+      // 画像関連
+      image: (page as any).properties.Image,
+      featuredImage: (page as any).properties.featuredImage,
+      // タイトル関連
+      name: (page as any).properties.Name,
+      title: (page as any).properties.title,
+    });
+
     const blocks = await notion.blocks.children.list({ 
       block_id: id,
       page_size: 100
     });
 
+    // デバッグログを追加
+    console.log('Page data:', JSON.stringify({
+      id: page.id,
+      properties: (page as any).properties,
+      blocks: blocks.results.length,
+      blockTypes: blocks.results.map((b: any) => b.type)
+    }, null, 2));
+
     const category = (page as any).properties.category?.relation?.[0]?.id 
       ? await getCategoryName((page as any).properties.category.relation[0].id)
       : { name: "その他", slug: "" };
 
-    // coverImageの処理を単純化
-    const coverImage = (page as any).cover?.external?.url || 
-                      (page as any).cover?.file?.url || 
-                      DEFAULT_COVER_IMAGE;
+    // 画像URLの取得ロジックを修正
+    let coverImage = DEFAULT_COVER_IMAGE;
+    const featuredImage = (page as any).properties.Image?.files?.[0] ||
+                         (page as any).properties.featuredImage?.files?.[0];
+    if (featuredImage) {
+      if (featuredImage.type === 'external') {
+        coverImage = featuredImage.external.url;
+      } else if (featuredImage.type === 'file') {
+        coverImage = featuredImage.file.url;
+      }
+    }
 
     const currentCase: Case = {
       id: page.id,
-      title: (page as any).properties.title.title[0]?.plain_text || "",
+      title: (page as any).properties.Name?.title[0]?.plain_text || 
+             (page as any).properties.title?.title[0]?.plain_text || "",
       category,
-      publishedAt: (page as any).properties.publishedAt?.date?.start || "",
-      client: (page as any).properties.client?.rich_text?.[0]?.plain_text || "",
-      period: (page as any).properties.period?.rich_text?.[0]?.plain_text || "",
-      coverImage,  // 生のURLをそのまま使用
-      description: (page as any).properties.description?.rich_text?.[0]?.plain_text || "",
-      challenge: (page as any).properties.challenge?.rich_text?.[0]?.plain_text || "",
-      solution: (page as any).properties.solution?.rich_text?.map((text: any) => text.plain_text) || [],
-      result: (page as any).properties.result?.rich_text?.[0]?.plain_text || "",
+      publishedAt: (page as any).properties.PublishedAt?.date?.start || 
+                   (page as any).properties.publishedAt?.date?.start || "",
+      client: (page as any).properties.Client?.rich_text[0]?.plain_text || 
+              (page as any).properties.client?.rich_text[0]?.plain_text || "",
+      period: (page as any).properties.Period?.rich_text[0]?.plain_text || 
+              (page as any).properties.period?.rich_text[0]?.plain_text || "",
+      coverImage,
+      description: (page as any).properties.Description?.rich_text[0]?.plain_text || 
+                   (page as any).properties.description?.rich_text[0]?.plain_text || "",
+      challenge: (page as any).properties.Challenge?.rich_text[0]?.plain_text || 
+                 (page as any).properties.challenge?.rich_text[0]?.plain_text || "",
+      solution: (page as any).properties.Solution?.rich_text?.map((text: any) => text.plain_text) || 
+                (page as any).properties.solution?.rich_text?.map((text: any) => text.plain_text) || [],
+      result: (page as any).properties.Result?.rich_text[0]?.plain_text || 
+              (page as any).properties.result?.rich_text[0]?.plain_text || "",
       blocks: blocks.results as BlockObjectResponse[]
     };
 

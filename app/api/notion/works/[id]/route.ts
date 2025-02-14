@@ -48,6 +48,20 @@ export async function GET(
       page_id: params.id,
     });
 
+    // デバッグログ追加
+    console.log('API Route Notion Data:', {
+      id: response.id,
+      properties: (response as any).properties,
+      propertyNames: Object.keys((response as any).properties),
+    });
+
+    // デバッグ用ログ追加
+    console.log('Notion response:', JSON.stringify({
+      properties: (response as any).properties,
+      featuredImage: (response as any).properties.featuredImage,
+      title: (response as any).properties.title,
+    }, null, 2));
+
     // 非公開の記事の場合は404を返す
     if ((response as any).properties.status?.select?.name !== "published") {
       return NextResponse.json({ error: 'Work not found' }, { status: 404 });
@@ -59,9 +73,10 @@ export async function GET(
       ? await getCategoryName(categoryRelation.id)
       : { name: "その他", slug: "" };
 
-    // featuredImageプロパティから画像URLを取得
+    // featuredImageプロパティから画像URLを取得（修正）
     let coverImage = DEFAULT_COVER_IMAGE;
-    const featuredImage = (response as any).properties.featuredImage?.files?.[0];
+    const featuredImage = (response as any).properties.Image?.files?.[0] ||
+                         (response as any).properties.featuredImage?.files?.[0];
     if (featuredImage) {
       if (featuredImage.type === 'external') {
         coverImage = featuredImage.external.url;
@@ -80,8 +95,10 @@ export async function GET(
       const categoryId = page.properties.category?.relation?.[0]?.id;
       const category = categoryId ? await getCategoryName(categoryId) : { name: "その他", slug: "" };
       
+      // 前後の記事の画像も同じロジックで取得（修正）
       let workCoverImage = DEFAULT_COVER_IMAGE;
-      const workFeaturedImage = page.properties.featuredImage?.files?.[0];
+      const workFeaturedImage = page.properties.Image?.files?.[0] ||
+                               page.properties.featuredImage?.files?.[0];
       if (workFeaturedImage) {
         if (workFeaturedImage.type === 'external') {
           workCoverImage = workFeaturedImage.external.url;

@@ -71,9 +71,10 @@ export async function GET() {
         }
       }
 
-      // featuredImageプロパティから画像URLを取得
+      // 画像URLの取得ロジックを修正
       let coverImage = DEFAULT_COVER_IMAGE;
-      const featuredImage = page.properties.featuredImage?.files?.[0];
+      const featuredImage = page.properties.Image?.files?.[0] ||
+                           page.properties.featuredImage?.files?.[0];
       if (featuredImage) {
         if (featuredImage.type === 'external') {
           coverImage = featuredImage.external.url;
@@ -84,7 +85,8 @@ export async function GET() {
 
       return {
         id: page.id,
-        title: page.properties.title.title[0]?.plain_text || "",
+        title: page.properties.Name?.title[0]?.plain_text ||
+               page.properties.title?.title[0]?.plain_text || "",
         publishedAt: new Date(page.last_edited_time).toLocaleDateString('ja-JP', {
           year: 'numeric',
           month: '2-digit',
