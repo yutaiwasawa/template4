@@ -1,12 +1,12 @@
 import { Client } from "@notionhq/client";
 import type { PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
 
-if (process.env.NODE_ENV === 'production' && !process.env.NOTION_API_KEY) {
-  throw new Error("Missing NOTION_API_KEY environment variable in production");
+if (!process.env.NOTION_API_KEY) {
+  throw new Error("NOTION_API_KEY is not defined");
 }
 
 export const notion = new Client({
-  auth: process.env.NOTION_API_KEY || 'dummy-key-for-development',
+  auth: process.env.NOTION_API_KEY,
 });
 
 // 画像URLをCloudinaryに変換する関数
