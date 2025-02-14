@@ -78,8 +78,13 @@ export async function getWorkNavigation(currentId: string) {
 // 最新の実績3件を取得する関数
 export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[]> {
   try {
-    console.log('NOTION_API_KEY exists:', !!process.env.NOTION_API_KEY);
-    console.log('DATABASE_ID:', process.env.NOTION_WORKS_DATABASE_ID);
+    // 環境変数の詳細なチェック
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('API Key length:', process.env.NOTION_API_KEY?.length);
+    console.log('API Key prefix:', process.env.NOTION_API_KEY?.substring(0, 7));
+    
+    // Notionクライアントの状態確認
+    console.log('Notion client config:', notion);
 
     const response = await notion.databases.query({
       database_id: process.env.NOTION_WORKS_DATABASE_ID!,
@@ -93,6 +98,15 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
           direction: "descending"
         }
       ]
+    }).catch(error => {
+      // エラーの詳細をログ
+      console.error('Notion API Error:', {
+        name: error.name,
+        code: error.code,
+        status: error.status,
+        message: error.message
+      });
+      throw error;
     });
 
     console.log('Notion response:', response);
@@ -114,7 +128,7 @@ export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[
 
     return works.slice(0, limit);
   } catch (error) {
-    console.error('Detailed error:', error);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
     return [];
   }
 }
