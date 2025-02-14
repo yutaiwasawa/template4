@@ -48,14 +48,13 @@ async function getWork(id: string): Promise<{
   nextCase: SimplifiedCase | null; 
 }> {
   try {
-    // 一時的にコメントアウト
-    // if (process.env.NODE_ENV === 'development') {
-    //   return {
-    //     currentCase: MOCK_CASE,
-    //     prevCase: null,
-    //     nextCase: null
-    //   };
-    // }
+    if (process.env.NODE_ENV === 'development' && !process.env.NOTION_API_KEY) {
+      return {
+        currentCase: MOCK_CASE,
+        prevCase: null,
+        nextCase: null
+      };
+    }
 
     const page = await notion.pages.retrieve({ page_id: id });
     
