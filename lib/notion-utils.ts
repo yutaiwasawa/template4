@@ -78,25 +78,36 @@ export async function getWorkNavigation(currentId: string) {
 // 最新の実績3件を取得する関数
 export async function getLatestWorks(limit: number = 3): Promise<SimplifiedCase[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
-    console.log('Fetching from:', `${baseUrl}/api/notion/works`); // デバッグ用
-
-    const response = await fetch(`${baseUrl}/api/notion/works`, {
-      next: { revalidate: 60 },
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
+      filter: {
+        property: "status",
+        select: { equals: "published" }
+      },
+      sorts: [
+        {
+          property: "publishedAt",
+          direction: "descending"
+        }
+      ]
     });
 
-    if (!response.ok) {
-      console.error('Response not OK:', response.status, response.statusText);
-      throw new Error('Failed to fetch works');
-    }
+    const works = await Promise.all(response.results.map(async (page: any) => {
+      const categoryId = page.properties.category?.relation[0]?.id;
+      const category = categoryId 
+        ? await getCategoryName(categoryId)
+        : { name: "その他", slug: "" };
 
-    const data = await response.json();
-    console.log('Fetched data:', data); // デバッグ用
-    return data.works.slice(0, limit);
+      return {
+        id: page.id,
+        title: page.properties.title.title[0]?.plain_text || "",
+        coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
+        category,
+        publishedAt: page.properties.publishedAt?.date?.start || ""
+      };
+    }));
+
+    return works.slice(0, limit);
   } catch (error) {
     console.error('Error details:', error);
     return [];
@@ -117,18 +128,50 @@ export async function getWorksByPage(page: number, perPage: number) {
 // getWorks関数も必要
 export async function getWorks() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/notion/works`, {
-      next: { revalidate: 60 }
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_WORKS_DATABASE_ID!,
+      filter: {
+        property: "status",
+        select: { equals: "published" }
+      },
+      sorts: [
+        {
+          property: "publishedAt",
+          direction: "descending"
+        }
+      ]
     });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch works');
-    }
 
-    return response.json();
+    // カテゴリー情報も取得
+    const categoriesResponse = await notion.databases.query({
+      database_id: process.env.NOTION_CATEGORIES_DATABASE_ID!
+    });
+
+    // データを整形
+    const works = await Promise.all(response.results.map(async (page: any) => {
+      const categoryId = page.properties.category?.relation[0]?.id;
+      const category = categoryId 
+        ? await getCategoryName(categoryId)
+        : { name: "その他", slug: "" };
+
+      return {
+        id: page.id,
+        title: page.properties.title.title[0]?.plain_text || "",
+        coverImage: page.cover?.external?.url || page.cover?.file?.url || DEFAULT_COVER_IMAGE,
+        category,
+        publishedAt: page.properties.publishedAt?.date?.start || ""
+      };
+    }));
+
+    const categories = categoriesResponse.results.map((page: any) => ({
+      id: page.id,
+      name: page.properties.name.title[0]?.plain_text || "",
+      slug: page.properties.slug.rich_text[0]?.plain_text || ""
+    }));
+
+    return { works, categories };
   } catch (error) {
-    console.error('Error fetching works:', error);
+    console.error('Error details:', error);
     return { works: [], categories: [] };
   }
 } 
