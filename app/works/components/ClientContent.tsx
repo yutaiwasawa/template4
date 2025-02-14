@@ -11,18 +11,7 @@ import Image from "next/image";
 import { useProcessImage } from '../../../hooks/useProcessImage';
 import { Work, Category } from '../../../types/work';
 import { useRouter } from 'next/navigation';
-
-const fetcher = async (url: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
-  const response = await fetch(`${baseUrl}${url}`, {
-    headers: {
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache'
-    }
-  });
-  if (!response.ok) throw new Error('Failed to fetch');
-  return response.json();
-};
+import { getWorks } from '../../../lib/notion-utils';
 
 // WorkCardを別コンポーネントとして切り出す
 const WorkCard = ({ 
@@ -90,31 +79,20 @@ export default function ClientContent({ initialData, currentPage }: ClientConten
   const [currentCategory, setCurrentCategory] = useState("all");
   const itemsPerPage = 6;
 
-  const { data: categoriesData, error: categoriesError } = useSWR<{ categories: Category[] }>(
-    '/api/notion/categories', 
-    fetcher, 
+  const { data: worksData, error: worksError } = useSWR<{ works: Work[]; categories: Category[] }>(
+    'works',
+    () => getWorks(),  // lib/notion-utils.tsの関数を使用
     {
-      fallbackData: initialData,  // 初期データを設定
+      fallbackData: initialData,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       dedupingInterval: 60000,
     }
   );
 
-  const { data: worksData, error: worksError } = useSWR<{ works: Work[] }>(
-    '/api/notion/works', 
-    fetcher, 
-    {
-      fallbackData: initialData,  // 初期データを設定
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 60000,
-    }
-  );
-
-  const isLoading = !categoriesData || !worksData;
-  const error = categoriesError || worksError;
-  const categories = categoriesData?.categories || [];
+  const isLoading = !worksData;
+  const error = worksError;
+  const categories = worksData?.categories || [];
   const works = worksData?.works || [];
 
   // カテゴリーでフィルタリングされた記事を取得
@@ -139,9 +117,9 @@ export default function ClientContent({ initialData, currentPage }: ClientConten
   // ページ遷移関数
   const handlePageChange = (page: number) => {
     if (page === 1) {
-      router.push('/works');  // 1ページ目は?page=1を付けない
+      router.push('/works');  // 正しいパス
     } else {
-      router.push(`/works?page=${page}`);
+      router.push(`/works?page=${page}`);  // 正しいパス
     }
   };
 
